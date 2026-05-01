@@ -1,0 +1,19 @@
+"""CLI for {{ project_name }}."""
+
+import click
+
+
+@click.group()
+@click.version_option()
+def main() -> None:
+    """{{ project_description }}"""
+
+
+@main.command()
+def hello() -> None:
+    """Say hello."""
+    click.echo("Hello from {{ project_name }}!")
+
+
+if __name__ == "__main__":
+    main()

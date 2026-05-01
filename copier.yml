@@ -1,0 +1,95 @@
+_min_copier_version: "9.0.0"
+_subdirectory: template
+_templates_suffix: .jinja
+
+# ─── Questions ───────────────────────────────────────────────────────────────
+
+project_name:
+  type: str
+  help: "Nom du projet (ex: Spectral Anomaly Detection)"
+  validator: "{% if not project_name %}Requis{% endif %}"
+
+project_slug:
+  type: str
+  help: "Slug Python (snake_case)"
+  default: "{{ project_name | lower | replace(' ', '_') | replace('-', '_') }}"
+
+project_description:
+  type: str
+  help: "Description courte"
+  default: "A Python project."
+
+author:
+  type: str
+  help: "Auteur"
+
+github_username:
+  type: str
+  help: "Username GitHub"
+
+email:
+  type: str
+  help: "Email"
+
+python_version:
+  type: str
+  help: "Version Python minimale"
+  default: "3.11"
+  choices: ["3.10", "3.11", "3.12", "3.13"]
+
+package_manager:
+  type: str
+  help: "Gestionnaire de dépendances"
+  default: "uv"
+  choices:
+    uv: "uv (rapide, recommandé)"
+    poetry: "Poetry"
+
+license:
+  type: str
+  help: "Licence"
+  default: "MIT"
+  choices: ["MIT", "Apache-2.0", "GPL-3.0", "Proprietary"]
+
+use_docker:
+  type: bool
+  help: "Inclure un Dockerfile ?"
+  default: true
+
+use_github_actions:
+  type: bool
+  help: "Inclure CI GitHub Actions ?"
+  default: true
+
+use_pre_commit:
+  type: bool
+  help: "Inclure pre-commit ?"
+  default: true
+
+use_docs:
+  type: bool
+  help: "Inclure MkDocs ?"
+  default: false
+
+use_cli:
+  type: bool
+  help: "Inclure un CLI (click) ?"
+  default: false
+
+use_data:
+  type: bool
+  help: "Inclure un dossier data/ avec Git LFS ?"
+  default: false
+
+use_notebooks:
+  type: bool
+  help: "Inclure un dossier notebooks/ ?"
+  default: false
+
+# ─── Conditional exclusions ──────────────────────────────────────────────────
+_exclude:
+  - "{% if not use_docs %}docs{% endif %}"
+  - "{% if not use_docs %}mkdocs.yml{% endif %}"
+  - "{% if not use_data %}data{% endif %}"
+  - "{% if not use_data %}.gitattributes{% endif %}"
+  - "{% if not use_notebooks %}notebooks{% endif %}"

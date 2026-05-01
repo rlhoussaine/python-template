@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+{% if package_manager == "uv" -%}
+env:
+  UV_CACHE_DIR: ~/.cache/uv
+{% endif %}
+
+jobs:
+  # ── Qualité du code ──────────────────────────────────────────────────────
+  quality:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "{{ python_version }}"
+
+{% if package_manager == "uv" -%}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Ruff (lint + format check)
+        run: |
+          uv run ruff check src/ tests/
+          uv run ruff format --check src/ tests/
+
+      - name: Mypy
+        run: uv run mypy src/
+{% else -%}
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-in-project: true
+
+      - name: Cache Poetry venv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ "{{" }} runner.os {{ "}}" }}-${{ "{{" }} hashFiles('poetry.lock') {{ "}}" }}
+
+      - name: Install dependencies
+        run: poetry install --all-groups
+
+      - name: Ruff (lint + format check)
+        run: |
+          poetry run ruff check src/ tests/
+          poetry run ruff format --check src/ tests/
+
+      - name: Mypy
+        run: poetry run mypy src/
+{% endif %}
+
+  # ── Tests ────────────────────────────────────────────────────────────────
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["{{ python_version }}"]
+        # Décommenter pour tester plusieurs versions :
+        # python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ "{{" }} matrix.python-version {{ "}}" }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ "{{" }} matrix.python-version {{ "}}" }}
+
+{% if package_manager == "uv" -%}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run tests
+        run: uv run pytest --cov --cov-report=term --cov-report=xml -q
+
+{% else -%}
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-in-project: true
+
+      - name: Cache Poetry venv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ "{{" }} runner.os {{ "}}" }}-${{ "{{" }} matrix.python-version {{ "}}" }}-${{ "{{" }} hashFiles('poetry.lock') {{ "}}" }}
+
+      - name: Install dependencies
+        run: poetry install --all-groups
+
+      - name: Run tests
+        run: poetry run pytest --cov --cov-report=term --cov-report=xml -q
+{% endif %}
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ "{{" }} matrix.python-version {{ "}}" }}
+          path: coverage.xml
