@@ -1,73 +1,80 @@
 # 🐍 Python Project Template
 
-Template [Copier](https://copier.readthedocs.io/) pour bootstrapper un projet Python moderne.
+Template [Copier](https://copier.readthedocs.io/) to bootstrap a modern Python project.
 
 ## Utilisation
 
-### Option 1 : Copier (recommandé)
+### Option 1: Copier (recommended)
 
 ```bash
-# Installer copier
+# Install copier
 pip install copier
 
-# Créer un nouveau projet
-copier copy gh:YOUR_USERNAME/python-template mon-projet
+# Create a new project
+copier copy gh:rlhoussaine/python-template my-project
 
-# Mettre à jour un projet existant avec les dernières modifs du template
+# Update an existing project with latest template changes
 copier update
 ```
 
-### Option 2 : GitHub "Use this template"
+### Option 2: GitHub "Use this template"
 
-1. Cliquer sur **"Use this template"** → **"Create a new repository"**
-2. Cloner le nouveau repo
-3. Lancer le script d'initialisation :
+1. Click **"Use this template"** -> **"Create a new repository"**
+2. Clone your new repository
+3. Run the initializer script:
 
 ```bash
-cd mon-nouveau-repo
+cd my-new-repo
 python scripts/init_project.py
 ```
 
-Le script vous pose les mêmes questions que Copier et configure le projet.
+The script asks the same questions as Copier and configures the project.
 
-## Ce que le template inclut
+## What the template includes
 
 | Outil | Description |
 |-------|-------------|
-| **uv** ou **Poetry** | Gestion des dépendances (au choix) |
+| **uv** or **Poetry** | Dependency management (choose one) |
 | **ruff** | Linter + formatter |
 | **mypy** | Type checking |
-| **pytest** + **coverage** | Tests unitaires et intégration |
-| **pre-commit** | Hooks automatiques (optionnel) |
-| **GitHub Actions** | CI/CD (optionnel) |
-| **Docker** | Containerisation multi-stage (optionnel) |
-| **MkDocs** | Documentation (optionnel) |
+| **pytest** + **coverage** | Unit and integration tests |
+| **pre-commit** | Automated hooks (optional) |
+| **GitHub Actions** | CI/CD (optional) |
+| **Docker** | Multi-stage containerization (optional) |
+| **MkDocs** | Documentation (optional) |
+| **data/ + Git LFS** | Data folder with LFS tracking (optional) |
+| **notebooks/** | Exploration notebooks folder (optional) |
 
-## Structure générée
+## Generated structure
 
 ```
-mon-projet/
+my-project/
 ├── src/
-│   └── mon_projet/
+│   └── my_project/
 │       ├── __init__.py
 │       └── __main__.py
 ├── tests/
 │   ├── conftest.py
 │   ├── ut/
 │   └── it/
+├── data/                # if use_data (Git LFS)
+├── notebooks/           # if use_notebooks
 ├── pyproject.toml
 ├── Makefile
 ├── Dockerfile          # si use_docker
 ├── .pre-commit-config.yaml  # si use_pre_commit
 ├── .github/workflows/ci.yml # si use_github_actions
+├── .gitattributes      # if use_data
+├── CHANGELOG.md
+├── LICENSE
 └── README.md
 ```
 
-## Personnalisation
+## Customization
 
-Après génération, le projet est entièrement autonome. Modifiez ce que vous voulez.
-Pour recevoir les mises à jour du template : `copier update`.
+After generation, your project is fully autonomous. Customize anything you want.
+To receive template updates later: `copier update`.
 
-## Licence
+## License
 
 MIT

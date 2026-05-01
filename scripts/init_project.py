@@ -77,6 +77,16 @@ def render_string(text, ctx):
         env = Environment(keep_trailing_newline=True)
         return env.from_string(text).render(**ctx)
     except ImportError:
+        # Minimal fallback: supports simple {% if flag %}...{% endif %} blocks.
+        if_pattern = re.compile(r"{%\s*if\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*%}(.*?){%\s*endif\s*%}")
+        while True:
+            new_text = if_pattern.sub(
+                lambda m: m.group(2) if ctx.get(m.group(1), False) else "",
+                text,
+            )
+            if new_text == text:
+                break
+            text = new_text
         for key, val in ctx.items():
             text = text.replace("{{ " + key + " }}", str(val))
             text = text.replace("{{" + key + "}}", str(val))
@@ -84,22 +94,38 @@ def render_string(text, ctx):
 
 
 def render_tree(root, ctx):
-    # 1) Render .jinja files
-    for path in sorted(root.rglob("*.jinja")):
+    # 1) Render *.jinja file contents and strip .jinja suffix
+    for path in sorted(root.rglob("*.jinja"), reverse=True):
         content = path.read_text(encoding="utf-8")
         rendered = render_string(content, ctx)
         target = path.with_suffix("")
         target.write_text(rendered, encoding="utf-8")
         path.unlink()
 
-    # 2) Rename {{ project_slug }} directories
+    # 2) Render conditional names like {% if ... %}name{% endif %} and rename/delete
+    for path in sorted(root.rglob("*"), reverse=True):
+        if "{%" not in path.name:
+            continue
+        rendered_name = render_string(path.name, ctx).strip()
+        if not rendered_name:
+            if path.is_dir():
+                shutil.rmtree(path, ignore_errors=True)
+            else:
+                path.unlink(missing_ok=True)
+            continue
+
+        target = path.with_name(rendered_name)
+        if target != path and not target.exists():
+            path.rename(target)
+
+    # 3) Rename {{ project_slug }} directories
     for dirpath in sorted(root.rglob("{{ project_slug }}"), reverse=True):
         if dirpath.is_dir():
             new_name = dirpath.parent / ctx["project_slug"]
             if not new_name.exists():
                 dirpath.rename(new_name)
 
-    # 3) Remove conditional files
+    # 4) Keep explicit removals as a safety net
     if not ctx["use_docker"]:
         (root / "Dockerfile").unlink(missing_ok=True)
     if not ctx["use_pre_commit"]:
@@ -109,6 +135,7 @@ def render_tree(root, ctx):
         ci.unlink(missing_ok=True)
     if not ctx["use_docs"]:
         shutil.rmtree(root / "docs", ignore_errors=True)
+        (root / "mkdocs.yml").unlink(missing_ok=True)
     if not ctx["use_data"]:
         shutil.rmtree(root / "data", ignore_errors=True)
         (root / ".gitattributes").unlink(missing_ok=True)

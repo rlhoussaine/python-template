@@ -14,6 +14,9 @@ RUN pip install --no-cache-dir poetry && \
 
 WORKDIR /app
 
+# Lockfile required before `docker build`:
+# - uv: run `uv sync` once to create `uv.lock`
+# - Poetry: run `poetry install` once to create `poetry.lock`
 {% if package_manager == "uv" -%}
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
