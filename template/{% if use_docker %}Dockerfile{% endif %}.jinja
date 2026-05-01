@@ -1,0 +1,53 @@
+# ── Base ─────────────────────────────────────────────────────────────────────
+FROM python:{{ python_version }}-slim AS base
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+    && rm -rf /var/lib/apt/lists/*
+
+{% if package_manager == "uv" -%}
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+{% else -%}
+RUN pip install --no-cache-dir poetry && \
+    poetry config virtualenvs.in-project true
+{% endif %}
+
+WORKDIR /app
+
+{% if package_manager == "uv" -%}
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+{% else -%}
+COPY pyproject.toml poetry.lock ./
+RUN poetry install --no-root --only main
+{% endif %}
+
+# ── Dev ──────────────────────────────────────────────────────────────────────
+FROM base AS dev
+
+{% if package_manager == "uv" -%}
+RUN uv sync --frozen --no-install-project
+{% else -%}
+RUN poetry install --no-root --all-groups
+{% endif %}
+
+COPY . .
+{% if package_manager == "uv" -%}
+RUN uv sync --frozen
+{% else -%}
+RUN poetry install
+{% endif %}
+
+ENTRYPOINT ["/bin/bash"]
+
+# ── Prod ─────────────────────────────────────────────────────────────────────
+FROM base AS prod
+
+COPY . .
+{% if package_manager == "uv" -%}
+RUN uv sync --frozen --no-dev
+{% else -%}
+RUN poetry install --only main
+{% endif %}
+
+ENTRYPOINT ["python", "-m", "{{ project_slug }}"]
