@@ -1,0 +1,14 @@
+"""Integration test fixtures."""
+{% if use_testcontainers %}
+import pytest
+from testcontainers.postgres import PostgresContainer
+
+
+@pytest.fixture(scope="session")
+def postgres():
+    """Provide a real PostgreSQL instance for integration tests."""
+    with PostgresContainer("postgres:16") as pg:
+        yield pg
+{% else %}
+import pytest
+{% endif %}

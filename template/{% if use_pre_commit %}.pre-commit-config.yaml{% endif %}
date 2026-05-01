@@ -17,11 +17,16 @@ repos:
         args: [--fix]
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.1
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.7.3
     hooks:
-      - id: mypy
-        additional_dependencies: []
+      - id: pip-audit
+        stages: [pre-push]
+
+  - repo: https://github.com/astral-sh/ty
+    rev: 0.0.1a6
+    hooks:
+      - id: ty
 
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v4.2.2

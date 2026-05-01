@@ -1,0 +1,42 @@
+# AGENTS.md — Directives pour les assistants IA
+
+Ce fichier guide les assistants IA (GitHub Copilot, Cursor, Claude)
+pour qu'ils respectent les conventions de ce projet.
+
+## Structure du projet
+
+- Le code source est dans `src/{{ project_slug }}/`
+- Les tests sont dans `tests/ut/` (unitaires) et `tests/it/` (intégration)
+- Ne jamais créer de fichiers à la racine en dehors des fichiers de configuration
+
+## Style de code
+
+- Formatter : **Ruff** (`uv run ruff format`)
+- Linter : **Ruff** (`uv run ruff check`)
+- Type checker : **ty** (`uv run ty check src/`)
+- Longueur de ligne : 100 caractères
+- Toutes les fonctions publiques doivent avoir des type hints
+
+## Conventions Git
+
+Ce projet suit les **Conventional Commits** :
+- `feat:` nouvelle fonctionnalité
+- `fix:` correction de bug
+- `docs:` documentation uniquement
+- `refactor:` refactoring sans changement de comportement
+- `test:` ajout ou modification de tests
+- `chore:` maintenance (deps, CI...)
+
+## Gestion des dépendances
+
+- Gestionnaire : **uv**
+- Ajouter une dépendance : `uv add <package>`
+- Ajouter une dépendance de dev : `uv add --group dev <package>`
+- Ne jamais modifier `pyproject.toml` manuellement pour les dépendances
+
+## Tests
+
+- Lancer tous les tests : `uv run pytest`
+- Tests unitaires uniquement : `uv run pytest tests/ut/`
+- Avec couverture : `uv run pytest --cov`
+- Chaque nouvelle fonctionnalité doit avoir un test unitaire correspondant

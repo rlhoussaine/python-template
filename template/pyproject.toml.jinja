@@ -1,13 +1,7 @@
 [build-system]
-{% if package_manager == "uv" -%}
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-{% else -%}
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-{% endif %}
 
-{% if package_manager == "uv" -%}
 [project]
 name = "{{ project_slug }}"
 version = "0.1.0"
@@ -20,73 +14,44 @@ authors = [
 ]
 dependencies = []
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "ruff>=0.8",
-    "mypy>=1.13",
-{% if use_pre_commit -%}
+    "ruff>=0.15.0",
+    # ty est encore en alpha: mettre a jour regulierement.
+    "ty>=0.0.1a6",
+    "deptry>=0.23",
+{%- if use_pre_commit %}
     "pre-commit>=4.0",
-{% endif -%}
+{%- endif %}
+{%- if use_hypothesis %}
+    "hypothesis>=6.0",
+{%- endif %}
 ]
 test = [
     "pytest>=8.0",
     "pytest-cov>=6.0",
+{%- if use_testcontainers %}
+    "testcontainers>=4.0",
+{%- endif %}
 ]
-{% if use_docs -%}
+{%- if use_docs %}
 docs = [
     "mkdocs>=1.6",
     "mkdocs-material>=9.5",
     "mkdocstrings[python]>=0.27",
 ]
-{% endif -%}
-{% if use_cli -%}
+{%- endif %}
+{%- if use_cli %}
 cli = ["click>=8.1"]
-{% endif %}
+{%- endif %}
 
-{% if use_cli -%}
+{%- if use_cli %}
 [project.scripts]
 {{ project_slug }} = "{{ project_slug }}.cli:main"
-{% endif -%}
+{%- endif %}
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/{{ project_slug }}"]
-
-{% else -%}
-[tool.poetry]
-name = "{{ project_slug }}"
-version = "0.1.0"
-description = "{{ project_description }}"
-authors = ["{{ author }} <{{ email }}>"]
-readme = "README.md"
-license = "{{ license }}"
-packages = [{ include = "{{ project_slug }}", from = "src" }]
-
-[tool.poetry.dependencies]
-python = "^{{ python_version }}"
-
-[tool.poetry.group.dev.dependencies]
-ruff = ">=0.8"
-mypy = ">=1.13"
-{% if use_pre_commit -%}
-pre-commit = ">=4.0"
-{% endif -%}
-
-[tool.poetry.group.test.dependencies]
-pytest = ">=8.0"
-pytest-cov = ">=6.0"
-
-{% if use_docs -%}
-[tool.poetry.group.docs.dependencies]
-mkdocs = ">=1.6"
-mkdocs-material = ">=9.5"
-mkdocstrings = {extras = ["python"], version = ">=0.27"}
-{% endif -%}
-
-{% if use_cli -%}
-[tool.poetry.scripts]
-{{ project_slug }} = "{{ project_slug }}.cli:main"
-{% endif -%}
-{% endif %}
 
 # ─── Ruff ────────────────────────────────────────────────────────────────────
 [tool.ruff]
@@ -112,12 +77,9 @@ select = [
 [tool.ruff.lint.isort]
 known-first-party = ["{{ project_slug }}"]
 
-# ─── Mypy ────────────────────────────────────────────────────────────────────
-[tool.mypy]
-python_version = "{{ python_version }}"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
+# ─── ty ──────────────────────────────────────────────────────────────────────
+[tool.ty]
+python-version = "{{ python_version }}"
 
 # ─── Pytest ──────────────────────────────────────────────────────────────────
 [tool.pytest.ini_options]

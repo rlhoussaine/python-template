@@ -5,52 +5,33 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
     && rm -rf /var/lib/apt/lists/*
 
-{% if package_manager == "uv" -%}
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-{% else -%}
-RUN pip install --no-cache-dir poetry && \
-    poetry config virtualenvs.in-project true
-{% endif %}
 
 WORKDIR /app
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
-# Lockfile required before `docker build`:
-# - uv: run `uv sync` once to create `uv.lock`
-# - Poetry: run `poetry install` once to create `poetry.lock`
-{% if package_manager == "uv" -%}
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
-{% else -%}
-COPY pyproject.toml poetry.lock ./
-RUN poetry install --no-root --only main
-{% endif %}
+# On ne copie que le pyproject.toml pour que l'image puisse générer le lock
+COPY pyproject.toml ./
+
+# On génère le lock à la volée dans l'image, puis on installe de façon figée sans les dépendances de dev
+RUN uv lock && uv sync --frozen --no-dev --no-install-project
 
 # ── Dev ──────────────────────────────────────────────────────────────────────
 FROM base AS dev
 
-{% if package_manager == "uv" -%}
-RUN uv sync --frozen --no-install-project
-{% else -%}
-RUN poetry install --no-root --all-groups
-{% endif %}
-
 COPY . .
-{% if package_manager == "uv" -%}
 RUN uv sync --frozen
-{% else -%}
-RUN poetry install
-{% endif %}
 
 ENTRYPOINT ["/bin/bash"]
 
 # ── Prod ─────────────────────────────────────────────────────────────────────
 FROM base AS prod
 
+RUN useradd --create-home appuser
+USER appuser
+
 COPY . .
-{% if package_manager == "uv" -%}
 RUN uv sync --frozen --no-dev
-{% else -%}
-RUN poetry install --only main
-{% endif %}
 
 ENTRYPOINT ["python", "-m", "{{ project_slug }}"]

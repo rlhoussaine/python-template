@@ -24,8 +24,7 @@ QUESTIONS = [
     ("author", "Auteur", None),
     ("github_username", "Username GitHub", None),
     ("email", "Email", None),
-    ("python_version", "Version Python minimale [3.10/3.11/3.12/3.13]", "3.11"),
-    ("package_manager", "Gestionnaire [uv/poetry]", "uv"),
+    ("python_version", "Version Python minimale [3.11/3.12/3.13/3.14]", "3.12"),
     ("license", "Licence [MIT/Apache-2.0/GPL-3.0/Proprietary]", "MIT"),
     ("use_docker", "Inclure Dockerfile ? [y/n]", "y"),
     ("use_github_actions", "Inclure CI GitHub Actions ? [y/n]", "y"),
@@ -34,6 +33,8 @@ QUESTIONS = [
     ("use_cli", "Inclure un CLI click ? [y/n]", "n"),
     ("use_data", "Inclure un dossier data/ avec Git LFS ? [y/n]", "n"),
     ("use_notebooks", "Inclure un dossier notebooks/ ? [y/n]", "n"),
+    ("use_hypothesis", "Inclure Hypothesis (property-based testing) ? [y/n]", "n"),
+    ("use_testcontainers", "Inclure Testcontainers ? [y/n]", "n"),
 ]
 
 
@@ -65,7 +66,17 @@ def collect_answers():
             answers[key] = ask(key, prompt, derived)
         else:
             answers[key] = ask(key, prompt, default)
-    for k in ("use_docker", "use_github_actions", "use_pre_commit", "use_docs", "use_cli", "use_data", "use_notebooks"):
+    for k in (
+        "use_docker",
+        "use_github_actions",
+        "use_pre_commit",
+        "use_docs",
+        "use_cli",
+        "use_data",
+        "use_notebooks",
+        "use_hypothesis",
+        "use_testcontainers",
+    ):
         answers[k] = to_bool(answers[k])
     return answers
 
@@ -133,6 +144,10 @@ def render_tree(root, ctx):
     if not ctx["use_github_actions"]:
         ci = root / ".github" / "workflows" / "ci.yml"
         ci.unlink(missing_ok=True)
+        release = root / ".github" / "workflows" / "release.yml"
+        release.unlink(missing_ok=True)
+        shutil.rmtree(root / ".github" / "ISSUE_TEMPLATE", ignore_errors=True)
+        (root / ".github" / "pull_request_template.md").unlink(missing_ok=True)
     if not ctx["use_docs"]:
         shutil.rmtree(root / "docs", ignore_errors=True)
         (root / "mkdocs.yml").unlink(missing_ok=True)
@@ -158,21 +173,14 @@ def post_init(root, ctx):
 
     # Overwrite the repo README with the rendered project README
     print("\n Installing dependencies...")
-    if ctx["package_manager"] == "uv":
-        run_cmd(["uv", "sync", "--all-extras"], cwd=root)
-    else:
-        run_cmd(["poetry", "install", "--all-groups"], cwd=root)
+    run_cmd(["uv", "sync", "--all-groups"], cwd=root)
 
     if ctx["use_pre_commit"]:
         print(" Setting up pre-commit hooks...")
-        prefix = ["uv", "run"] if ctx["package_manager"] == "uv" else ["poetry", "run"]
-        run_cmd([*prefix, "pre-commit", "install", "--install-hooks"], cwd=root)
+        run_cmd(["uv", "run", "pre-commit", "install", "--install-hooks"], cwd=root)
 
     print(f"\n Project '{ctx['project_name']}' ready!")
-    if ctx["package_manager"] == "uv":
-        print("   uv run pytest")
-    else:
-        print("   poetry shell && pytest")
+    print("   uv run pytest")
 
 
 def main():

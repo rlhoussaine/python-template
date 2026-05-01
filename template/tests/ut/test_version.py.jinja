@@ -10,3 +10,14 @@ def test_version():
     """Check that version is defined."""
     assert __version__ is not None
     assert isinstance(__version__, str)
+
+{% if use_hypothesis %}
+from hypothesis import given, strategies as st
+
+
+@pytest.mark.unit
+@given(st.text())
+def test_example_property(s: str) -> None:
+    """Example property-based test - adapt to your domain."""
+    assert isinstance(s, str)
+{% endif %}

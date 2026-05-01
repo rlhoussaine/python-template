@@ -1,0 +1,48 @@
+name: 🐛 Bug Report
+description: Le template génère quelque chose de cassé ou de inattendu
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de signaler ce bug. Remplis les champs ci-dessous avec le plus de détails possible.
+
+  - type: input
+    id: copier-version
+    attributes:
+      label: Version de Copier
+      placeholder: "ex: 9.4.0"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Version Python choisie
+      placeholder: "ex: 3.12"
+    validations:
+      required: true
+
+  - type: textarea
+    id: options
+    attributes:
+      label: Options Copier sélectionnées
+      description: "Colle ici le contenu de ton `.copier-answers.yml`"
+      render: yaml
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description du problème
+      description: "Qu'est-ce qui ne fonctionne pas ? Quel était le comportement attendu ?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Message d'erreur
+      render: shell

@@ -1,22 +1,14 @@
 .PHONY: help install test lint format check clean docs
 
 SHELL := /bin/bash
-{% if package_manager == "uv" -%}
 RUN := uv run
-{% else -%}
-RUN := poetry run
-{% endif %}
 
 help: ## Afficher cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 install: ## Installer le projet et ses dépendances
-{% if package_manager == "uv" -%}
-	uv sync --all-extras
-{% else -%}
-	poetry install --all-groups
-{% endif %}
+	uv sync --all-groups
 
 test: ## Lancer les tests
 	$(RUN) pytest --cov -q
@@ -27,9 +19,10 @@ test-unit: ## Tests unitaires uniquement
 test-integration: ## Tests d'intégration uniquement
 	$(RUN) pytest tests/it/ -v
 
-lint: ## Vérifier le code (ruff + mypy)
+lint: ## Vérifier le code (ruff + ty + deptry)
 	$(RUN) ruff check src/ tests/
-	$(RUN) mypy src/
+	$(RUN) ty check src/
+	$(RUN) deptry src/
 
 format: ## Formatter le code
 	$(RUN) ruff format src/ tests/
@@ -38,7 +31,7 @@ format: ## Formatter le code
 check: format lint test ## Format + lint + test
 
 clean: ## Nettoyer les fichiers temporaires
-	rm -rf dist/ build/ *.egg-info .coverage htmlcov/ .pytest_cache/ .mypy_cache/ site/
+	rm -rf dist/ build/ *.egg-info .coverage htmlcov/ .pytest_cache/ site/
 	find . -type d -name __pycache__ -exec rm -rf {} +
 
 {% if use_docs -%}

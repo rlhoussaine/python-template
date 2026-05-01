@@ -22,28 +22,23 @@ project_description:
 author:
   type: str
   help: "Auteur"
+  default: "Your Name"
 
 github_username:
   type: str
   help: "Username GitHub"
+  default: "your-username"
 
 email:
   type: str
   help: "Email"
+  default: "you@example.com"
 
 python_version:
   type: str
   help: "Version Python minimale"
-  default: "3.11"
-  choices: ["3.10", "3.11", "3.12", "3.13"]
-
-package_manager:
-  type: str
-  help: "Gestionnaire de dépendances"
-  default: "uv"
-  choices:
-    uv: "uv (rapide, recommandé)"
-    poetry: "Poetry"
+  default: "3.12"
+  choices: ["3.11", "3.12", "3.13", "3.14"]
 
 license:
   type: str
@@ -86,6 +81,16 @@ use_notebooks:
   help: "Inclure un dossier notebooks/ ?"
   default: false
 
+use_hypothesis:
+  type: bool
+  help: "Inclure Hypothesis (property-based testing) ?"
+  default: false
+
+use_testcontainers:
+  type: bool
+  help: "Inclure Testcontainers (tests d'intégration avec Docker) ?"
+  default: false
+
 # ─── Conditional exclusions ──────────────────────────────────────────────────
 _exclude:
   - "{% if not use_docs %}docs{% endif %}"
@@ -93,3 +98,5 @@ _exclude:
   - "{% if not use_data %}data{% endif %}"
   - "{% if not use_data %}.gitattributes{% endif %}"
   - "{% if not use_notebooks %}notebooks{% endif %}"
+  - "{% if not use_github_actions %}.github/ISSUE_TEMPLATE{% endif %}"
+  - "{% if not use_github_actions %}.github/pull_request_template.md{% endif %}"

@@ -2,6 +2,11 @@
 
 Template [Copier](https://copier.readthedocs.io/) to bootstrap a modern Python project.
 
+![CI Template](https://github.com/rlhoussaine/python-template/actions/workflows/ci-template.yml/badge.svg)
+![Security](https://github.com/rlhoussaine/python-template/actions/workflows/ci-template.yml/badge.svg?job=security)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Copier](https://img.shields.io/badge/copier-9.0%2B-green.svg)
+
 ## Utilisation
 
 ### Option 1: Copier (recommended)
@@ -34,9 +39,11 @@ The script asks the same questions as Copier and configures the project.
 
 | Outil | Description |
 |-------|-------------|
-| **uv** or **Poetry** | Dependency management (choose one) |
+| **uv** | Dependency management |
 | **ruff** | Linter + formatter |
-| **mypy** | Type checking |
+| **ty** | Type checking |
+| **deptry** | Dependency hygiene checks |
+| **pip-audit** | Security audit of dependencies |
 | **pytest** + **coverage** | Unit and integration tests |
 | **pre-commit** | Automated hooks (optional) |
 | **GitHub Actions** | CI/CD (optional) |
@@ -49,6 +56,7 @@ The script asks the same questions as Copier and configures the project.
 
 ```
 my-project/
+├── AGENTS.md              # directives pour assistants IA sur ce dépôt
 ├── src/
 │   └── my_project/
 │       ├── __init__.py
@@ -57,18 +65,29 @@ my-project/
 │   ├── conftest.py
 │   ├── ut/
 │   └── it/
-├── data/                # if use_data (Git LFS)
-├── notebooks/           # if use_notebooks
+├── data/                       # si use_data (Git LFS)
+├── notebooks/                  # si use_notebooks
 ├── pyproject.toml
 ├── Makefile
-├── Dockerfile          # si use_docker
-├── .pre-commit-config.yaml  # si use_pre_commit
-├── .github/workflows/ci.yml # si use_github_actions
-├── .gitattributes      # if use_data
+├── Dockerfile                  # si use_docker ; le Dockerfile génère `uv.lock` pendant le build
+├── .pre-commit-config.yaml      # si use_pre_commit
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml              # si use_github_actions
+│   │   └── release.yml          # si use_github_actions (release-please)
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml
+│   │   └── feature_request.yml
+│   └── pull_request_template.md
+├── .gitattributes              # si use_data
 ├── CHANGELOG.md
 ├── LICENSE
 └── README.md
 ```
+
+💡 **Note sur les dépendances :** Le template génère un `pyproject.toml`. Le fichier `uv.lock` sera créé automatiquement lors de votre premier `uv sync` local, ou à la volée dans l'image lors d'un `docker build`.
+
+Without the GitHub Actions option, the `.github/` folder is not included in the generated project.
 
 ## Customization
 

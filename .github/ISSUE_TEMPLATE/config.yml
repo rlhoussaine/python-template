@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation Copier
+    url: https://copier.readthedocs.io/
+    about: Documentation officielle de Copier
+  - name: 💬 Discussions
+    url: https://github.com/rlhoussaine/python-template/discussions
+    about: Questions générales et partage d'expérience

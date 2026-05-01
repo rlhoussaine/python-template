@@ -1,0 +1,132 @@
+name: CI Template
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  UV_CACHE_DIR: ~/.cache/uv
+
+jobs:
+  # ── Lint des sources du template ─────────────────────────────────────────
+  lint-sources:
+    name: Lint Template Sources
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install ruff
+        run: uv tool install ruff
+
+      - name: Ruff sur les fichiers .jinja
+        run: |
+          find template/ -name "*.jinja" | while read f; do
+            # Strip jinja tags for linting
+            sed 's/{[%{].*[%}]}//g' "$f" > /tmp/lint_target.py
+            ruff check /tmp/lint_target.py || true
+          done
+
+      - name: Validate YAML sources
+        run: |
+          uv tool install check-jsonschema
+          find . -name "*.yml" -not -path "./.git/*" | xargs uv run check-jsonschema --check-metaschema || true
+
+  # ── Validation du template (génération + tests) ───────────────────────────
+  validate-template:
+    name: Validate Generated Project
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+        options:
+          - label: "minimal"
+            extra_args: ""
+          - label: "full"
+            extra_args: "--data use_docker=true --data use_github_actions=true --data use_pre_commit=false --data use_docs=true --data use_cli=true --data use_hypothesis=true"
+          - label: "hypothesis"
+            extra_args: "--data use_hypothesis=true"
+          - label: "full_hypothesis_testcontainers"
+            extra_args: "--data use_docker=true --data use_github_actions=true --data use_pre_commit=false --data use_docs=true --data use_cli=true --data use_hypothesis=true --data use_testcontainers=true"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Copier
+        run: uv tool install copier
+
+      - name: Generate project from template
+        run: |
+          copier copy . /tmp/test-project \
+            --defaults \
+            --data project_name="Test Project" \
+            --data author="CI Bot" \
+            --data github_username="ci-bot" \
+            --data email="ci@example.com" \
+            --data python_version="${{ matrix.python-version }}" \
+            ${{ matrix.options.extra_args }} \
+            --trust
+
+      - name: Install generated project
+        run: uv sync --all-groups
+        working-directory: /tmp/test-project
+
+      - name: Run tests on generated project
+        run: uv run pytest -q
+        working-directory: /tmp/test-project
+
+      - name: Lint generated project
+        run: |
+          uv run ruff check src/ tests/
+          uv run ruff format --check src/ tests/
+        working-directory: /tmp/test-project
+
+  # ── Audit de sécurité ─────────────────────────────────────────────────────
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install pip-audit
+        run: uv tool install pip-audit
+
+      - name: Generate project for audit
+        run: |
+          uv tool install copier
+          copier copy . /tmp/audit-project \
+            --defaults \
+            --data project_name="Audit Project" \
+            --data author="CI Bot" \
+            --data github_username="ci-bot" \
+            --data email="ci@example.com" \
+            --trust
+
+      - name: pip-audit
+        run: |
+          cd /tmp/audit-project
+          uv sync --all-groups
+          uv run pip-audit
