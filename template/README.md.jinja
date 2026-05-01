@@ -32,6 +32,28 @@ uv run deptry src/
 uv run ruff format src/ tests/
 ```
 
+{% if use_docker %}
+## Docker
+
+Pour un build reproductible, génère et commite `uv.lock` avant le premier `docker build` :
+
+```bash
+# 1. Générer le lockfile (une seule fois, ou après chaque changement de dépendances)
+uv sync
+git add uv.lock && git commit -m "chore: add lockfile"
+
+# 2. Builder les images
+docker build -t {{ project_slug }}:latest --target prod .
+docker build -t {{ project_slug }}:dev --target dev .
+
+# 3. Lancer le conteneur de production
+docker run --rm {{ project_slug }}:latest
+
+# 4. Lancer le conteneur de développement (shell interactif)
+docker run --rm -it {{ project_slug }}:dev
+```
+{% endif %}
+
 {% if use_data -%}
 ## Données
 

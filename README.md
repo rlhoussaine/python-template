@@ -52,6 +52,15 @@ The script asks the same questions as Copier and configures the project.
 | **data/ + Git LFS** | Data folder with LFS tracking (optional) |
 | **notebooks/** | Exploration notebooks folder (optional) |
 
+💡 **Note sur `uv.lock` et Docker :** Si tu utilises l'option Docker, génère et commite
+`uv.lock` avant ton premier `docker build` :
+
+```bash
+uv sync                                          # génère uv.lock
+git add uv.lock && git commit -m "chore: add lockfile"
+docker build -t my-project:latest --target prod .
+```
+
 ## Generated structure
 
 ```
@@ -84,8 +93,6 @@ my-project/
 ├── LICENSE
 └── README.md
 ```
-
-💡 **Note sur la reproductibilité :** Le template génère un `pyproject.toml`. Pour garantir des builds Docker 100% reproductibles, vous **devez** générer le fichier `uv.lock` localement (en lançant `uv sync` ou `uv lock`) et le commiter sur Git avant de lancer un `docker build`.
 
 Without the GitHub Actions option, the `.github/` folder is not included in the generated project.
 
