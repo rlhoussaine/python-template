@@ -69,7 +69,7 @@ my-project/
 ├── notebooks/                  # si use_notebooks
 ├── pyproject.toml
 ├── Makefile
-├── Dockerfile                  # si use_docker ; le Dockerfile génère `uv.lock` pendant le build
+├── Dockerfile                  # si use_docker ; requiert un `uv.lock` versionné pour un build reproductible
 ├── .pre-commit-config.yaml      # si use_pre_commit
 ├── .github/
 │   ├── workflows/
@@ -85,7 +85,7 @@ my-project/
 └── README.md
 ```
 
-💡 **Note sur les dépendances :** Le template génère un `pyproject.toml`. Le fichier `uv.lock` sera créé automatiquement lors de votre premier `uv sync` local, ou à la volée dans l'image lors d'un `docker build`.
+💡 **Note sur la reproductibilité :** Le template génère un `pyproject.toml`. Pour garantir des builds Docker 100% reproductibles, vous **devez** générer le fichier `uv.lock` localement (en lançant `uv sync` ou `uv lock`) et le commiter sur Git avant de lancer un `docker build`.
 
 Without the GitHub Actions option, the `.github/` folder is not included in the generated project.
 

@@ -68,7 +68,7 @@ Les formats trackés par LFS sont définis dans `.gitattributes`.
 ├── pyproject.toml
 ├── Makefile
 {% if use_docker -%}
-├── Dockerfile       # Dépendances : `uv lock` pendant le docker build ; pas obligatoire d'avoir uv.lock avant
+├── Dockerfile       # Docker reproductible : versionner `uv.lock` (p.ex. `uv sync` / `uv lock`) avant `docker build`
 {% endif -%}
 {% if use_pre_commit -%}
 ├── .pre-commit-config.yaml

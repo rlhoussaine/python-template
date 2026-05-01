@@ -11,11 +11,10 @@ WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
 
-# On ne copie que le pyproject.toml pour que l'image puisse générer le lock
-COPY pyproject.toml ./
+# Lockfile versionné pour des builds déterministes (`uv sync --frozen`)
+COPY pyproject.toml uv.lock ./
 
-# On génère le lock à la volée dans l'image, puis on installe de façon figée sans les dépendances de dev
-RUN uv lock && uv sync --frozen --no-dev --no-install-project
+RUN uv sync --frozen --no-dev --no-install-project
 
 # ── Dev ──────────────────────────────────────────────────────────────────────
 FROM base AS dev
@@ -29,9 +28,9 @@ ENTRYPOINT ["/bin/bash"]
 FROM base AS prod
 
 RUN useradd --create-home appuser
-USER appuser
+COPY --chown=appuser:appuser . .
 
-COPY . .
 RUN uv sync --frozen --no-dev
 
-ENTRYPOINT ["python", "-m", "{{ project_slug }}"]
+USER appuser
+CMD ["python", "-m", "{{ project_slug }}"]
