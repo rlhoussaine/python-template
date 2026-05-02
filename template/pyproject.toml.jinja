@@ -70,9 +70,9 @@ select = [
     "B",    # flake8-bugbear
     "SIM",  # flake8-simplify
     "RUF",  # ruff-specific
+    "S",    # flake8-bandit (sécurité — remplace Bandit)
+    "PT",   # flake8-pytest-style
 ]
-# Pour activer les vérifications de sécurité (remplace Bandit) :
-# Ajouter "S" à la liste select ci-dessus
 
 [tool.ruff.lint.isort]
 known-first-party = ["{{ project_slug }}"]
