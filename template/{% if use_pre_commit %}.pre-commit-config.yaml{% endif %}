@@ -1,35 +1,66 @@
-# Tip: run `pre-commit autoupdate` regularly to keep hook versions current.
+# Tip : `pre-commit autoupdate` régulier pour garder les versions à jour.
+default_language_version:
+  python: python3
+
 repos:
+  # ── Hygiène de base ──────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-merge-conflict
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-toml
       - id: check-yaml
+      - id: check-json
       - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-case-conflict
+      - id: check-symlinks
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ['--fix=lf']
 
+  # ── Détection de secrets ─────────────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+
+  # ── Formatage / lint Python ──────────────────────────────────────────
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+    rev: v0.15.12
     hooks:
       - id: ruff
-        args: [--fix]
+        args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
 
+  # ── Type-checking ────────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty check
+        entry: uvx ty check .
+        language: system
+        pass_filenames: false
+        types: [python]
+
+  # ── Lint des workflows GitHub Actions ────────────────────────────────
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
+  # ── Audit sécurité (en pre-push pour ne pas ralentir les commits) ────
   - repo: https://github.com/pypa/pip-audit
-    rev: v2.7.3
+    rev: v2.10.0
     hooks:
       - id: pip-audit
         stages: [pre-push]
 
-  - repo: https://github.com/astral-sh/ty
-    rev: 0.0.1a6
-    hooks:
-      - id: ty
-
+  # ── Conventional Commits ─────────────────────────────────────────────
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.2.2
+    rev: v4.13.10
     hooks:
       - id: commitizen
         stages: [commit-msg]

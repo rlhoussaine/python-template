@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/dev tooling
+.github
+{% if use_pre_commit %}
+.pre-commit-config.yaml
+{% endif %}
+{% if task_runner == "just" or task_runner == "both" %}
+justfile
+{% endif %}
+{% if task_runner == "make" or task_runner == "both" %}
+Makefile
+{% endif %}
+
+# Python
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+build/
+dist/
+
+# Test / cache
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov/
+
+# Docs
+{% if use_docs %}
+docs/
+mkdocs.yml
+site/
+{% endif %}
+
+# Données et notebooks (non nécessaires en runtime)
+{% if use_data %}
+data/
+{% endif %}
+{% if use_notebooks %}
+notebooks/
+{% endif %}
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests (non nécessaires en image prod)
+tests/

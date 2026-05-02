@@ -35,6 +35,8 @@ QUESTIONS = [
     ("use_notebooks", "Inclure un dossier notebooks/ ? [y/n]", "n"),
     ("use_hypothesis", "Inclure Hypothesis (property-based testing) ? [y/n]", "n"),
     ("use_testcontainers", "Inclure Testcontainers ? [y/n]", "n"),
+    ("task_runner", "Orchestrateur de tâches [just/make/both]", "just"),
+    ("use_pypi_publish", "Publication PyPI via OIDC ? [y/n]", "n"),
 ]
 
 
@@ -76,6 +78,7 @@ def collect_answers():
         "use_notebooks",
         "use_hypothesis",
         "use_testcontainers",
+        "use_pypi_publish",
     ):
         answers[k] = to_bool(answers[k])
     return answers
@@ -156,6 +159,19 @@ def render_tree(root, ctx):
         (root / ".gitattributes").unlink(missing_ok=True)
     if not ctx["use_notebooks"]:
         shutil.rmtree(root / "notebooks", ignore_errors=True)
+
+    if ctx["task_runner"] == "just":
+        (root / "Makefile").unlink(missing_ok=True)
+    elif ctx["task_runner"] == "make":
+        (root / "justfile").unlink(missing_ok=True)
+
+    if not ctx["use_pypi_publish"]:
+        (root / ".github" / "workflows" / "publish.yml").unlink(missing_ok=True)
+
+    if not ctx["use_github_actions"]:
+        for wf in ("scorecard.yml", "codeql.yml"):
+            (root / ".github" / "workflows" / wf).unlink(missing_ok=True)
+        (root / ".github" / "dependabot.yml").unlink(missing_ok=True)
 
 
 def run_cmd(cmd, cwd=None):

@@ -1,0 +1,83 @@
+# justfile — orchestrateur de tâches multiplateforme
+# Lancer `just` ou `just --list` pour voir toutes les commandes disponibles.
+
+# Afficher la liste des recettes
+default:
+    @just --list
+
+# Installer le projet et toutes ses dépendances
+install:
+    uv sync --all-groups
+{% if use_pre_commit %}
+    uv run pre-commit install --install-hooks
+{% endif %}
+
+# Mettre à jour les dépendances vers leurs dernières versions compatibles
+update:
+    uv lock --upgrade
+    uv sync --all-groups
+{% if use_pre_commit %}
+    uv run pre-commit autoupdate
+{% endif %}
+
+# Lancer les tests (passage d'arguments natif: `just test -k motif`)
+test *args:
+    uv run pytest --cov {{ '{{' }}args{{ '}}' }}
+
+# Tests unitaires uniquement
+test-ut *args:
+    uv run pytest tests/ut/ {{ '{{' }}args{{ '}}' }}
+
+# Tests d'intégration uniquement
+test-it *args:
+    uv run pytest tests/it/ {{ '{{' }}args{{ '}}' }}
+
+# Formater + linter + type-check (auto-fix)
+lint:
+    uv run ruff format src/ tests/
+    uv run ruff check --fix src/ tests/
+    uv run ty check src/
+    uv run deptry src/
+
+# Vérifier sans modifier (utilisé en CI)
+check:
+    uv run ruff format --check src/ tests/
+    uv run ruff check src/ tests/
+    uv run ty check src/
+    uv run deptry src/
+
+# Audit sécurité des dépendances
+audit:
+    uv run pip-audit
+
+{% if use_pre_commit %}
+# Lancer tous les hooks pre-commit sur tout le projet
+pre-commit:
+    uv run pre-commit run --all-files
+{% endif %}
+
+{% if use_docs %}
+# Servir la documentation localement (live-reload)
+docs-serve:
+    uv run mkdocs serve
+
+# Construire la documentation en mode strict
+docs-build:
+    uv run mkdocs build --strict
+{% endif %}
+
+{% if use_docker %}
+# Builder les images Docker (dev + prod)
+docker-build:
+    docker build -t {{ project_slug }}:dev --target dev .
+    docker build -t {{ project_slug }}:latest --target prod .
+
+# Lancer le conteneur de production
+docker-run:
+    docker run --rm -it {{ project_slug }}:latest
+{% endif %}
+
+# Nettoyer les artefacts générés
+clean:
+    rm -rf dist/ build/ .coverage htmlcov/ .pytest_cache/ .ruff_cache/ site/
+    find . -type d -name __pycache__ -exec rm -rf {} +

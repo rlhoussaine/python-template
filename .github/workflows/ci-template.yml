@@ -17,6 +17,7 @@ jobs:
   lint-sources:
     name: Lint Template Sources
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -45,6 +46,7 @@ jobs:
   validate-template:
     name: Validate Generated Project
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -52,12 +54,18 @@ jobs:
         options:
           - label: "minimal"
             extra_args: ""
+          - label: "with_just"
+            extra_args: "--data task_runner=just"
+          - label: "with_make"
+            extra_args: "--data task_runner=make"
+          - label: "with_publish"
+            extra_args: "--data use_pypi_publish=true"
           - label: "full"
-            extra_args: "--data use_docker=true --data use_github_actions=true --data use_pre_commit=false --data use_docs=true --data use_cli=true --data use_hypothesis=true"
+            extra_args: "--data use_docker=true --data use_github_actions=true --data use_pre_commit=false --data use_docs=true --data use_cli=true --data use_hypothesis=true --data task_runner=just --data use_pypi_publish=true"
           - label: "hypothesis"
             extra_args: "--data use_hypothesis=true"
           - label: "full_hypothesis_testcontainers"
-            extra_args: "--data use_docker=true --data use_github_actions=true --data use_pre_commit=false --data use_docs=true --data use_cli=true --data use_hypothesis=true --data use_testcontainers=true"
+            extra_args: "--data use_docker=true --data use_github_actions=true --data use_pre_commit=false --data use_docs=true --data use_cli=true --data use_hypothesis=true --data use_testcontainers=true --data task_runner=just --data use_pypi_publish=true"
 
     steps:
       - uses: actions/checkout@v4
@@ -101,10 +109,92 @@ jobs:
           uv run ruff format --check src/ tests/
         working-directory: /tmp/test-project
 
+  # ── Validation des workflows GitHub Actions ──────────────────────────────
+  validate-workflows:
+    name: Validate GitHub Actions Workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv and copier
+        uses: astral-sh/setup-uv@v5
+      - run: uv tool install copier
+
+      - name: Generate full project
+        run: |
+          copier copy . /tmp/test-actions \
+            --defaults \
+            --data project_name="Test" \
+            --data author="CI" \
+            --data github_username="ci" \
+            --data email="ci@example.com" \
+            --data use_github_actions=true \
+            --data use_pypi_publish=true \
+            --data task_runner=just \
+            --trust
+
+      - name: Install actionlint
+        run: |
+          bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          echo "$PWD" >> "$GITHUB_PATH"
+
+      - name: Run actionlint
+        run: actionlint /tmp/test-actions/.github/workflows/*.yml
+
+  # ── Validation Docker build ──────────────────────────────────────────────
+  validate-docker:
+    name: Validate Docker build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install copier
+        uses: astral-sh/setup-uv@v5
+      - run: uv tool install copier
+
+      - name: Generate project with Docker
+        run: |
+          copier copy . /tmp/test-docker \
+            --defaults \
+            --data project_name="Test" \
+            --data author="CI" \
+            --data github_username="ci" \
+            --data email="ci@example.com" \
+            --data use_docker=true \
+            --trust
+          cd /tmp/test-docker
+          uv sync
+
+      - name: Build prod image
+        run: |
+          cd /tmp/test-docker
+          docker buildx build --target prod -t test:prod --load .
+
+      - name: Verify uv is NOT in prod image
+        run: |
+          if docker run --rm test:prod which uv 2>/dev/null; then
+            echo "ERROR: uv binary should not be in prod image"
+            exit 1
+          fi
+
+      - name: Verify non-root user
+        run: |
+          USER=$(docker run --rm test:prod id -u)
+          if [ "$USER" = "0" ]; then
+            echo "ERROR: prod image must run as non-root"
+            exit 1
+          fi
+
   # ── Audit de sécurité ─────────────────────────────────────────────────────
   security:
     name: Security Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 

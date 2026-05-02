@@ -12,43 +12,64 @@ requires-python = ">={{ python_version }}"
 authors = [
     { name = "{{ author }}", email = "{{ email }}" },
 ]
+keywords = []
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: {{ python_version }}",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+{% if license == "MIT" %}
+    "License :: OSI Approved :: MIT License",
+{% elif license == "Apache-2.0" %}
+    "License :: OSI Approved :: Apache Software License",
+{% elif license == "GPL-3.0" %}
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+{% endif %}
+]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/{{ github_username }}/{{ project_slug }}"
+Repository = "https://github.com/{{ github_username }}/{{ project_slug }}"
+Issues = "https://github.com/{{ github_username }}/{{ project_slug }}/issues"
+Changelog = "https://github.com/{{ github_username }}/{{ project_slug }}/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = [
     "ruff>=0.15.0",
-    # ty est encore en alpha: mettre a jour regulierement.
     "ty>=0.0.1a6",
     "deptry>=0.23",
-{%- if use_pre_commit %}
+    "pip-audit>=2.7",
+{% if use_pre_commit %}
     "pre-commit>=4.0",
-{%- endif %}
-{%- if use_hypothesis %}
+{% endif %}
+{% if use_hypothesis %}
     "hypothesis>=6.0",
-{%- endif %}
+{% endif %}
 ]
 test = [
     "pytest>=8.0",
     "pytest-cov>=6.0",
-{%- if use_testcontainers %}
+{% if use_testcontainers %}
     "testcontainers>=4.0",
-{%- endif %}
+{% endif %}
 ]
-{%- if use_docs %}
+{% if use_docs %}
 docs = [
     "mkdocs>=1.6",
     "mkdocs-material>=9.5",
     "mkdocstrings[python]>=0.27",
 ]
-{%- endif %}
-{%- if use_cli %}
+{% endif %}
+{% if use_cli %}
 cli = ["click>=8.1"]
-{%- endif %}
+{% endif %}
 
-{%- if use_cli %}
+{% if use_cli %}
 [project.scripts]
 {{ project_slug }} = "{{ project_slug }}.cli:main"
-{%- endif %}
+{% endif %}
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/{{ project_slug }}"]
@@ -61,21 +82,32 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = [
-    "E",    # pycodestyle errors
-    "W",    # pycodestyle warnings
-    "F",    # pyflakes
-    "I",    # isort
-    "N",    # pep8-naming
-    "UP",   # pyupgrade
-    "B",    # flake8-bugbear
-    "SIM",  # flake8-simplify
-    "RUF",  # ruff-specific
-    "S",    # flake8-bandit (sécurité — remplace Bandit)
-    "PT",   # flake8-pytest-style
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "SIM",   # flake8-simplify
+    "RUF",   # ruff-specific
+    "S",     # flake8-bandit
+    "PT",    # flake8-pytest-style
+    "PERF",  # perflint
+    "PTH",   # use pathlib
+    "TCH",   # type-checking imports
+    "RET",   # return statements
+    "C4",    # comprehensions
+    "ARG",   # unused arguments
 ]
 
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 80
+
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101"]  # assert statements are expected in tests
+"tests/**/*.py" = ["S101", "ARG001"]
+"**/__init__.py" = ["F401"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["{{ project_slug }}"]
@@ -99,4 +131,11 @@ omit = ["tests/*"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 0
+skip_covered = true
+fail_under = 60
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]

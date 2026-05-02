@@ -1,4 +1,7 @@
-.PHONY: help install test lint format check clean docs
+# NOTE : depuis la v0.2.0, `just` est l'orchestrateur recommandé.
+# Ce Makefile est conservé pour compatibilité (option `task_runner=make` ou `both`).
+
+.PHONY: help install update test test-unit test-integration lint format check audit clean docs
 
 SHELL := /bin/bash
 RUN := uv run
@@ -9,6 +12,16 @@ help: ## Afficher cette aide
 
 install: ## Installer le projet et ses dépendances
 	uv sync --all-groups
+{% if use_pre_commit %}
+	$(RUN) pre-commit install --install-hooks
+{% endif %}
+
+update: ## Mettre à jour les dépendances
+	uv lock --upgrade
+	uv sync --all-groups
+{% if use_pre_commit %}
+	$(RUN) pre-commit autoupdate
+{% endif %}
 
 test: ## Lancer les tests
 	$(RUN) pytest --cov -q
@@ -30,11 +43,14 @@ format: ## Formatter le code
 
 check: format lint test ## Format + lint + test
 
+audit: ## Audit sécurité des dépendances
+	$(RUN) pip-audit
+
 clean: ## Nettoyer les fichiers temporaires
 	rm -rf dist/ build/ *.egg-info .coverage htmlcov/ .pytest_cache/ site/
 	find . -type d -name __pycache__ -exec rm -rf {} +
 
-{% if use_docs -%}
+{% if use_docs %}
 docs: ## Générer la documentation
 	$(RUN) mkdocs build
 
@@ -42,7 +58,7 @@ docs-serve: ## Servir la documentation localement
 	$(RUN) mkdocs serve
 {% endif %}
 
-{% if use_docker -%}
+{% if use_docker %}
 docker-build: ## Builder l'image Docker
 	docker build -t {{ project_slug }}:dev --target dev .
 	docker build -t {{ project_slug }}:latest --target prod .

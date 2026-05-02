@@ -1,6 +1,10 @@
-_min_copier_version: "9.0.0"
+_min_copier_version: "9.4.0"
 _subdirectory: template
 _templates_suffix: .jinja
+_envops:
+  trim_blocks: true
+  lstrip_blocks: true
+  keep_trailing_newline: true
 
 # ─── Questions ───────────────────────────────────────────────────────────────
 
@@ -61,6 +65,15 @@ use_pre_commit:
   help: "Inclure pre-commit ?"
   default: true
 
+task_runner:
+  type: str
+  help: "Orchestrateur de tâches (just = recommandé 2026, multiplateforme)"
+  default: "just"
+  choices:
+    - just
+    - make
+    - both
+
 use_docs:
   type: bool
   help: "Inclure MkDocs ?"
@@ -91,6 +104,11 @@ use_testcontainers:
   help: "Inclure Testcontainers (tests d'intégration avec Docker) ?"
   default: false
 
+use_pypi_publish:
+  type: bool
+  help: "Publier sur PyPI via Trusted Publishing OIDC (workflow release) ?"
+  default: false
+
 # ─── Conditional exclusions ──────────────────────────────────────────────────
 _exclude:
   - "{% if not use_docs %}docs{% endif %}"
@@ -100,3 +118,6 @@ _exclude:
   - "{% if not use_notebooks %}notebooks{% endif %}"
   - "{% if not use_github_actions %}.github/ISSUE_TEMPLATE{% endif %}"
   - "{% if not use_github_actions %}.github/pull_request_template.md{% endif %}"
+  - "{% if task_runner == 'just' %}Makefile{% endif %}"
+  - "{% if task_runner == 'make' %}justfile{% endif %}"
+  - "{% if not use_pypi_publish %}.github/workflows/publish.yml{% endif %}"
