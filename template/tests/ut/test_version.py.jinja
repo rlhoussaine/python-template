@@ -1,9 +1,9 @@
 """Basic tests."""
 
-import pytest
 {%- if use_hypothesis %}
 from hypothesis import given, strategies as st
 {%- endif %}
+import pytest
 
 from {{ project_slug }} import __version__
 
