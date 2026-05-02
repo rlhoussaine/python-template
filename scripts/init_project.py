@@ -18,25 +18,25 @@ import sys
 from pathlib import Path
 
 QUESTIONS = [
-    ("project_name", "Nom du projet", None),
-    ("project_slug", "Slug Python (snake_case)", None),
-    ("project_description", "Description courte", "A Python project."),
-    ("author", "Auteur", None),
-    ("github_username", "Username GitHub", None),
+    ("project_name", "Project name", None),
+    ("project_slug", "Python slug (snake_case)", None),
+    ("project_description", "Short description", "A Python project."),
+    ("author", "Author", None),
+    ("github_username", "GitHub username", None),
     ("email", "Email", None),
-    ("python_version", "Version Python minimale [3.11/3.12/3.13/3.14]", "3.12"),
-    ("license", "Licence [MIT/Apache-2.0/GPL-3.0/Proprietary]", "MIT"),
-    ("use_docker", "Inclure Dockerfile ? [y/n]", "y"),
-    ("use_github_actions", "Inclure CI GitHub Actions ? [y/n]", "y"),
-    ("use_pre_commit", "Inclure pre-commit ? [y/n]", "y"),
-    ("use_docs", "Inclure MkDocs ? [y/n]", "n"),
-    ("use_cli", "Inclure un CLI click ? [y/n]", "n"),
-    ("use_data", "Inclure un dossier data/ avec Git LFS ? [y/n]", "n"),
-    ("use_notebooks", "Inclure un dossier notebooks/ ? [y/n]", "n"),
-    ("use_hypothesis", "Inclure Hypothesis (property-based testing) ? [y/n]", "n"),
-    ("use_testcontainers", "Inclure Testcontainers ? [y/n]", "n"),
-    ("task_runner", "Orchestrateur de tâches [just/make/both]", "just"),
-    ("use_pypi_publish", "Publication PyPI via OIDC ? [y/n]", "n"),
+    ("python_version", "Minimum Python version [3.11/3.12/3.13/3.14]", "3.12"),
+    ("license", "License [MIT/Apache-2.0/GPL-3.0/Proprietary]", "MIT"),
+    ("use_docker", "Include Dockerfile? [y/n]", "y"),
+    ("use_github_actions", "Include GitHub Actions CI? [y/n]", "y"),
+    ("use_pre_commit", "Include pre-commit? [y/n]", "y"),
+    ("use_docs", "Include MkDocs? [y/n]", "n"),
+    ("use_cli", "Include click CLI? [y/n]", "n"),
+    ("use_data", "Include data/ folder with Git LFS? [y/n]", "n"),
+    ("use_notebooks", "Include notebooks/ folder? [y/n]", "n"),
+    ("use_hypothesis", "Include Hypothesis (property-based testing)? [y/n]", "n"),
+    ("use_testcontainers", "Include Testcontainers? [y/n]", "n"),
+    ("task_runner", "Task runner [just/make/both]", "just"),
+    ("use_pypi_publish", "Publish to PyPI via OIDC? [y/n]", "n"),
 ]
 
 
@@ -48,7 +48,7 @@ def ask(key, prompt, default):
             return default
         if value:
             return value
-        print("    Valeur requise.")
+        print("    Required.")
 
 
 def to_bool(val):
@@ -91,7 +91,7 @@ def render_string(text, ctx):
         env = Environment(keep_trailing_newline=True, undefined=StrictUndefined)
         return env.from_string(text).render(**ctx)
     except ImportError:
-        # Minimal fallback: supports simple {% if flag %}...{% endif %} blocks.
+        # Minimal fallback: supports simple {% if flag %}...{% endif %} blocks only.
         if_pattern = re.compile(r"{%\s*if\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*%}(.*?){%\s*endif\s*%}")
         while True:
             new_text = if_pattern.sub(
@@ -108,7 +108,7 @@ def render_string(text, ctx):
 
 
 def render_tree(root, ctx):
-    # 1) Render *.jinja file contents and strip .jinja suffix
+    # 1) Render *.jinja contents and drop the .jinja suffix
     for path in sorted(root.rglob("*.jinja"), reverse=True):
         content = path.read_text(encoding="utf-8")
         rendered = render_string(content, ctx)
@@ -116,7 +116,7 @@ def render_tree(root, ctx):
         target.write_text(rendered, encoding="utf-8")
         path.unlink()
 
-    # 2) Render conditional names like {% if ... %}name{% endif %} and rename/delete
+    # 2) Render conditional path names ({% if ... %}name{% endif %}), rename or delete
     for path in sorted(root.rglob("*"), reverse=True):
         if "{%" not in path.name:
             continue
@@ -132,14 +132,14 @@ def render_tree(root, ctx):
         if target != path and not target.exists():
             path.rename(target)
 
-    # 3) Rename {{ project_slug }} directories
+    # 3) Rename {{ project_slug }} directories to the slug value
     for dirpath in sorted(root.rglob("{{ project_slug }}"), reverse=True):
         if dirpath.is_dir():
             new_name = dirpath.parent / ctx["project_slug"]
             if not new_name.exists():
                 dirpath.rename(new_name)
 
-    # 4) Keep explicit removals as a safety net
+    # 4) Explicit removals as a safety net
     if not ctx["use_docker"]:
         (root / "Dockerfile").unlink(missing_ok=True)
     if not ctx["use_pre_commit"]:
@@ -182,7 +182,7 @@ def run_cmd(cmd, cwd=None):
 
 
 def post_init(root, ctx):
-    # Clean template machinery
+    # Remove template-only scaffolding
     shutil.rmtree(root / "template", ignore_errors=True)
     shutil.rmtree(root / "scripts", ignore_errors=True)
     (root / "copier.yml").unlink(missing_ok=True)

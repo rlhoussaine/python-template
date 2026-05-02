@@ -1,45 +1,45 @@
 name: 🚀 Feature Request
-description: Proposer un nouvel outil, une option ou une amélioration au template
+description: Propose a new tool, option, or improvement to the template
 title: "[FEAT] "
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Merci pour ta suggestion ! Décris ce que tu aimerais voir dans le template.
+        Thanks for your suggestion! Describe what you would like to see in the template.
 
   - type: dropdown
     id: type
     attributes:
-      label: Type de demande
+      label: Request type
       options:
-        - Nouvel outil (linter, formatter, type checker...)
-        - Nouvelle option Copier (use_xxx)
-        - Amélioration d'un fichier existant
+        - New tool (linter, formatter, type checker...)
+        - New Copier option (use_xxx)
+        - Improvement to an existing file
         - Documentation
-        - Autre
+        - Other
     validations:
       required: true
 
   - type: textarea
     id: problem
     attributes:
-      label: Problème à résoudre
-      description: "Quel pain point cette feature résoudrait-elle ?"
+      label: Problem to solve
+      description: "What pain point would this feature address?"
     validations:
       required: true
 
   - type: textarea
     id: solution
     attributes:
-      label: Solution proposée
-      description: "Décris comment tu imagines l'implémentation."
+      label: Proposed solution
+      description: "Describe how you imagine it could work."
     validations:
       required: false
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives envisagées
+      label: Alternatives considered
     validations:
       required: false

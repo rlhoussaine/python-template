@@ -5,44 +5,44 @@
 ## Installation
 
 ```bash
-# Installer uv (si nécessaire)
+# Install uv (if needed)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Cloner et installer
+# Clone and install
 git clone https://github.com/{{ github_username }}/{{ project_slug }}.git
 cd {{ project_slug }}
 uv sync --all-groups
 ```
 
-## Développement
+## Development
 
 {% if task_runner == "just" or task_runner == "both" %}
-Ce projet utilise [Just](https://github.com/casey/just) comme orchestrateur de tâches.
+This project uses [Just](https://github.com/casey/just) as the task runner.
 
 ```bash
-just              # liste toutes les commandes disponibles
-just install      # installer toutes les dépendances
-just test         # lancer les tests
-just lint         # formater + linter + type-check (auto-fix)
-just check        # vérifier sans modifier (équivalent CI)
-just audit        # audit de sécurité des dépendances
+just              # list all available commands
+just install      # install all dependencies
+just test         # run tests
+just lint         # format + lint + type-check (auto-fix)
+just check        # verify without modifying (CI equivalent)
+just audit        # dependency security audit
 ```
 
-Pour installer Just : `cargo install just` ou voir [les autres méthodes](https://github.com/casey/just#installation).
+To install Just: `cargo install just` or see [other install methods](https://github.com/casey/just#installation).
 
 {% endif %}
 {% if task_runner == "make" or task_runner == "both" %}
 ```bash
-make help         # liste toutes les commandes
-make install      # installer les dépendances
-make test         # lancer les tests
-make lint         # vérifier le code
-make format       # formatter le code
+make help         # list all commands
+make install      # install dependencies
+make test         # run tests
+make lint         # check code
+make format       # format code
 ```
 
 {% endif %}
 
-Sans task runner, les commandes équivalentes :
+Without a task runner, equivalent commands:
 
 ```bash
 uv sync --all-groups                                 # install
@@ -56,41 +56,41 @@ uv run pip-audit                                     # audit
 {% if use_docker %}
 ## Docker
 
-Pour un build reproductible, génère et commite `uv.lock` avant le premier `docker build` :
+For reproducible builds, generate and commit `uv.lock` before the first `docker build`:
 
 ```bash
-# 1. Générer le lockfile (une seule fois, ou après chaque changement de dépendances)
+# 1. Generate the lockfile (once, or after dependency changes)
 uv sync
 git add uv.lock && git commit -m "chore: add lockfile"
 
-# 2. Builder les images
+# 2. Build images
 docker build -t {{ project_slug }}:latest --target prod .
 docker build -t {{ project_slug }}:dev --target dev .
 
-# 3. Lancer le conteneur de production
+# 3. Run the production container
 docker run --rm {{ project_slug }}:latest
 
-# 4. Lancer le conteneur de développement (shell interactif)
+# 4. Run the development container (interactive shell)
 docker run --rm -it {{ project_slug }}:dev
 ```
 {% endif %}
 
 {% if use_data %}
-## Données
+## Data
 
-Le dossier `data/` est versionné avec **Git LFS**. Assurez-vous d'avoir Git LFS installé :
+The `data/` directory is tracked with **Git LFS**. Install Git LFS on your machine:
 
 ```bash
-git lfs install   # une seule fois par machine
-git clone ...     # LFS pull automatique au clone
+git lfs install   # once per machine
+git clone ...     # LFS files are fetched on clone
 ```
 
-Les formats trackés par défaut sont les plus courants (CSV, Parquet, NPY, modèles ML,
-images, archives). Pour ajouter des formats spécifiques à votre domaine, éditer
-`.gitattributes` :
+Default tracked formats are common data types (CSV, Parquet, NPY, ML models,
+images, archives). To track additional formats for your domain, edit
+`.gitattributes`:
 
 ```bash
-# Exemple pour des formats scientifiques
+# Example for scientific formats
 *.h5 filter=lfs diff=lfs merge=lfs -text
 *.tif filter=lfs diff=lfs merge=lfs -text
 ```
@@ -98,27 +98,27 @@ images, archives). Pour ajouter des formats spécifiques à votre domaine, édit
 {% endif %}
 
 {% if use_pypi_publish %}
-## Publication sur PyPI
+## Publishing to PyPI
 
-Ce projet utilise [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/)
-(OIDC) — aucun token API à gérer.
+This project uses [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/)
+(OIDC) — no API token to manage.
 
-**Configuration une seule fois** :
+**One-time setup**:
 
-1. Créer le projet sur PyPI : https://pypi.org/manage/account/publishing/
-2. Renseigner :
-   - Repository owner : `{{ github_username }}`
-   - Repository name : `{{ project_slug }}`
-   - Workflow : `publish.yml`
-   - Environment : `pypi`
-3. Créer l'environment `pypi` dans GitHub : Settings → Environments → New environment
+1. Configure the project on PyPI: https://pypi.org/manage/account/publishing/
+2. Set:
+   - Repository owner: `{{ github_username }}`
+   - Repository name: `{{ project_slug }}`
+   - Workflow file: `publish.yml`
+   - Environment: `pypi`
+3. Create the `pypi` environment in GitHub: Settings → Environments → New environment
 
-**Publier une version** : créer une GitHub Release avec un tag `vX.Y.Z`. Le workflow
-`publish.yml` se déclenche automatiquement.
+**Publish a release**: create a GitHub Release with tag `vX.Y.Z`. The `publish.yml`
+workflow runs automatically.
 
 {% endif %}
 
-## Structure du projet
+## Project structure
 
 ```
 {{ project_slug }}/
@@ -131,12 +131,12 @@ Ce projet utilise [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publis
 │   ├── ut/
 │   └── it/
 {% if use_data %}
-├── data/             # Données versionnées (Git LFS)
+├── data/             # Versioned data (Git LFS)
 {% endif %}
 {% if use_notebooks %}
-├── notebooks/        # Notebooks d'exploration
+├── notebooks/        # Exploration notebooks
 {% endif %}
-├── AGENTS.md         # Directives IA / conventions du projet
+├── AGENTS.md         # AI / project conventions for assistants
 ├── pyproject.toml
 {% if task_runner == "just" or task_runner == "both" %}
 ├── justfile
@@ -146,7 +146,7 @@ Ce projet utilise [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publis
 {% endif %}
 {% if use_docker %}
 ├── Dockerfile
-├── .renovaterc.json    # mise à jour automatique de uv (Renovate)
+├── .renovaterc.json    # automated uv updates (Renovate)
 {% endif %}
 {% if use_pre_commit %}
 ├── .pre-commit-config.yaml
@@ -172,6 +172,6 @@ Ce projet utilise [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publis
 └── README.md
 ```
 
-## Licence
+## License
 
 {{ license }}

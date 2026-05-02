@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — vérifier sur https://github.com/astral-sh/setup-uv/releases
+        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — verify at https://github.com/astral-sh/setup-uv/releases
         with:
           enable-cache: true
 
@@ -31,7 +31,7 @@ jobs:
         run: uv build
 
       - name: Upload distributions
-        uses: actions/upload-artifact@v4 # TODO: pin to SHA — vérifier sur https://github.com/actions/upload-artifact/releases
+        uses: actions/upload-artifact@v4 # TODO: pin to SHA — verify at https://github.com/actions/upload-artifact/releases
         with:
           name: dist
           path: dist/
@@ -50,15 +50,15 @@ jobs:
       contents: read
     steps:
       - name: Download distributions
-        uses: actions/download-artifact@v4 # TODO: pin to SHA — vérifier sur https://github.com/actions/download-artifact/releases
+        uses: actions/download-artifact@v4 # TODO: pin to SHA — verify at https://github.com/actions/download-artifact/releases
         with:
           name: dist
           path: dist/
 
       - name: Generate SLSA provenance attestations
-        uses: actions/attest-build-provenance@v2 # TODO: pin to SHA — vérifier sur https://github.com/actions/attest-build-provenance/releases
+        uses: actions/attest-build-provenance@v2 # TODO: pin to SHA — verify at https://github.com/actions/attest-build-provenance/releases
         with:
           subject-path: 'dist/*'
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1 # TODO: pin to SHA — vérifier sur https://github.com/pypa/gh-action-pypi-publish/releases
+        uses: pypa/gh-action-pypi-publish@release/v1 # TODO: pin to SHA — verify at https://github.com/pypa/gh-action-pypi-publish/releases

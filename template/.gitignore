@@ -29,7 +29,7 @@ Thumbs.db
 # Docs
 site/
 
-# Data (LFS gère les gros fichiers, gitignore protège le reste)
+# Data (LFS stores large files; gitignore covers the rest)
 data/*
 !data/.gitkeep
 

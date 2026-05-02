@@ -1,34 +1,34 @@
 name: 🐛 Bug Report
-description: Le template génère quelque chose de cassé ou de inattendu
+description: The template generates something broken or unexpected
 title: "[BUG] "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Merci de signaler ce bug. Remplis les champs ci-dessous avec le plus de détails possible.
+        Thanks for reporting this bug. Please fill in the fields below with as much detail as possible.
 
   - type: input
     id: copier-version
     attributes:
-      label: Version de Copier
-      placeholder: "ex: 9.4.0"
+      label: Copier version
+      placeholder: "e.g., 9.4.0"
     validations:
       required: true
 
   - type: input
     id: python-version
     attributes:
-      label: Version Python choisie
-      placeholder: "ex: 3.12"
+      label: Selected Python version
+      placeholder: "e.g., 3.12"
     validations:
       required: true
 
   - type: textarea
     id: options
     attributes:
-      label: Options Copier sélectionnées
-      description: "Colle ici le contenu de ton `.copier-answers.yml`"
+      label: Selected Copier options
+      description: "Paste your `.copier-answers.yml` content here"
       render: yaml
     validations:
       required: true
@@ -36,13 +36,13 @@ body:
   - type: textarea
     id: description
     attributes:
-      label: Description du problème
-      description: "Qu'est-ce qui ne fonctionne pas ? Quel était le comportement attendu ?"
+      label: Problem description
+      description: "What isn't working? What was the expected behavior?"
     validations:
       required: true
 
   - type: textarea
     id: error
     attributes:
-      label: Message d'erreur
+      label: Error message
       render: shell

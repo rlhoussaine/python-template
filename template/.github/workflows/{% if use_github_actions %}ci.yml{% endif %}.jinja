@@ -17,7 +17,7 @@ env:
   UV_CACHE_DIR: ~/.cache/uv
 
 jobs:
-  # ── Qualité du code ──────────────────────────────────────────────────────
+  # ── Code quality ─────────────────────────────────────────────────────
   quality:
     name: Lint & Type Check
     runs-on: ubuntu-latest
@@ -28,12 +28,12 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5 # TODO: pin to SHA — vérifier sur https://github.com/actions/setup-python/releases
+        uses: actions/setup-python@v5 # TODO: pin to SHA — verify at https://github.com/actions/setup-python/releases
         with:
           python-version: "{{ python_version }}"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — vérifier sur https://github.com/astral-sh/setup-uv/releases
+        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — verify at https://github.com/astral-sh/setup-uv/releases
         with:
           enable-cache: true
 
@@ -64,19 +64,19 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.12", "3.13"]
-        # Décommenter pour tester plusieurs versions :
+        # Uncomment to test multiple versions:
         # python-version: ["3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python ${{ "{{" }} matrix.python-version {{ "}}" }}
-        uses: actions/setup-python@v5 # TODO: pin to SHA — vérifier sur https://github.com/actions/setup-python/releases
+        uses: actions/setup-python@v5 # TODO: pin to SHA — verify at https://github.com/actions/setup-python/releases
         with:
           python-version: ${{ "{{" }} matrix.python-version {{ "}}" }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — vérifier sur https://github.com/astral-sh/setup-uv/releases
+        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — verify at https://github.com/astral-sh/setup-uv/releases
         with:
           enable-cache: true
 
@@ -88,7 +88,7 @@ jobs:
 
       - name: Upload coverage
         if: always()
-        uses: actions/upload-artifact@v4 # TODO: pin to SHA — vérifier sur https://github.com/actions/upload-artifact/releases
+        uses: actions/upload-artifact@v4 # TODO: pin to SHA — verify at https://github.com/actions/upload-artifact/releases
         with:
           name: coverage-${{ "{{" }} matrix.python-version {{ "}}" }}
           path: coverage.xml

@@ -1,18 +1,18 @@
-# justfile — orchestrateur de tâches multiplateforme
-# Lancer `just` ou `just --list` pour voir toutes les commandes disponibles.
+# justfile — cross-platform task runner
+# Run `just` or `just --list` to see all available commands.
 
-# Afficher la liste des recettes
+# List all available recipes
 default:
     @just --list
 
-# Installer le projet et toutes ses dépendances
+# Install the project and all its dependencies
 install:
     uv sync --all-groups
 {% if use_pre_commit %}
     uv run pre-commit install --install-hooks
 {% endif %}
 
-# Mettre à jour les dépendances vers leurs dernières versions compatibles
+# Update dependencies to their latest compatible versions
 update:
     uv lock --upgrade
     uv sync --all-groups
@@ -20,64 +20,64 @@ update:
     uv run pre-commit autoupdate
 {% endif %}
 
-# Lancer les tests (passage d'arguments natif: `just test -k motif`)
+# Run tests (native argument passing: `just test -k pattern`)
 test *args:
     uv run pytest --cov {{ '{{' }}args{{ '}}' }}
 
-# Tests unitaires uniquement
+# Unit tests only
 test-ut *args:
     uv run pytest tests/ut/ {{ '{{' }}args{{ '}}' }}
 
-# Tests d'intégration uniquement
+# Integration tests only
 test-it *args:
     uv run pytest tests/it/ {{ '{{' }}args{{ '}}' }}
 
-# Formater + linter + type-check (auto-fix)
+# Format + lint + type-check (auto-fix)
 lint:
     uv run ruff format src/ tests/
     uv run ruff check --fix src/ tests/
     uv run ty check src/
     uv run deptry src/
 
-# Vérifier sans modifier (utilisé en CI)
+# Check without modifying (used in CI)
 check:
     uv run ruff format --check src/ tests/
     uv run ruff check src/ tests/
     uv run ty check src/
     uv run deptry src/
 
-# Audit sécurité des dépendances
+# Security audit of dependencies
 audit:
     uv run pip-audit
 
 {% if use_pre_commit %}
-# Lancer tous les hooks pre-commit sur tout le projet
+# Run all pre-commit hooks on the entire project
 pre-commit:
     uv run pre-commit run --all-files
 {% endif %}
 
 {% if use_docs %}
-# Servir la documentation localement (live-reload)
+# Serve documentation locally (live-reload)
 docs-serve:
     uv run mkdocs serve
 
-# Construire la documentation en mode strict
+# Build documentation in strict mode
 docs-build:
     uv run mkdocs build --strict
 {% endif %}
 
 {% if use_docker %}
-# Builder les images Docker (dev + prod)
+# Build Docker images (dev + prod)
 docker-build:
     docker build -t {{ project_slug }}:dev --target dev .
     docker build -t {{ project_slug }}:latest --target prod .
 
-# Lancer le conteneur de production
+# Run the production container
 docker-run:
     docker run --rm -it {{ project_slug }}:latest
 {% endif %}
 
-# Nettoyer les artefacts générés
+# Clean generated artifacts
 clean:
     rm -rf dist/ build/ .coverage htmlcov/ .pytest_cache/ .ruff_cache/ site/
     find . -type d -name __pycache__ -exec rm -rf {} +

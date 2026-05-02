@@ -1,68 +1,68 @@
-# NOTE : depuis la v0.2.0, `just` est l'orchestrateur recommandé.
-# Ce Makefile est conservé pour compatibilité (option `task_runner=make` ou `both`).
+# NOTE: since v0.2.0, `just` is the recommended task runner.
+# This Makefile is kept for compatibility (option `task_runner=make` or `both`).
 
 .PHONY: help install update test test-unit test-integration lint format check audit clean docs
 
 SHELL := /bin/bash
 RUN := uv run
 
-help: ## Afficher cette aide
+help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-install: ## Installer le projet et ses dépendances
+install: ## Install the project and its dependencies
 	uv sync --all-groups
 {% if use_pre_commit %}
 	$(RUN) pre-commit install --install-hooks
 {% endif %}
 
-update: ## Mettre à jour les dépendances
+update: ## Update dependencies
 	uv lock --upgrade
 	uv sync --all-groups
 {% if use_pre_commit %}
 	$(RUN) pre-commit autoupdate
 {% endif %}
 
-test: ## Lancer les tests
+test: ## Run tests
 	$(RUN) pytest --cov -q
 
-test-unit: ## Tests unitaires uniquement
+test-unit: ## Unit tests only
 	$(RUN) pytest tests/ut/ -v
 
-test-integration: ## Tests d'intégration uniquement
+test-integration: ## Integration tests only
 	$(RUN) pytest tests/it/ -v
 
-lint: ## Vérifier le code (ruff + ty + deptry)
+lint: ## Check code quality (ruff + ty + deptry)
 	$(RUN) ruff check src/ tests/
 	$(RUN) ty check src/
 	$(RUN) deptry src/
 
-format: ## Formatter le code
+format: ## Format code
 	$(RUN) ruff format src/ tests/
 	$(RUN) ruff check --fix src/ tests/
 
 check: format lint test ## Format + lint + test
 
-audit: ## Audit sécurité des dépendances
+audit: ## Security audit of dependencies
 	$(RUN) pip-audit
 
-clean: ## Nettoyer les fichiers temporaires
+clean: ## Clean temporary files
 	rm -rf dist/ build/ *.egg-info .coverage htmlcov/ .pytest_cache/ site/
 	find . -type d -name __pycache__ -exec rm -rf {} +
 
 {% if use_docs %}
-docs: ## Générer la documentation
+docs: ## Build documentation
 	$(RUN) mkdocs build
 
-docs-serve: ## Servir la documentation localement
+docs-serve: ## Serve documentation locally
 	$(RUN) mkdocs serve
 {% endif %}
 
 {% if use_docker %}
-docker-build: ## Builder l'image Docker
+docker-build: ## Build Docker image
 	docker build -t {{ project_slug }}:dev --target dev .
 	docker build -t {{ project_slug }}:latest --target prod .
 
-docker-run: ## Lancer le conteneur Docker
+docker-run: ## Run Docker container
 	docker run --rm -it {{ project_slug }}:latest
 {% endif %}

@@ -1,9 +1,9 @@
-# Tip : `pre-commit autoupdate` régulier pour garder les versions à jour.
+# Tip: run `pre-commit autoupdate` regularly to keep hook versions up to date.
 default_language_version:
   python: python3
 
 repos:
-  # ── Hygiène de base ──────────────────────────────────────────────────
+  # ── Basic hygiene ────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -21,13 +21,13 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
 
-  # ── Détection de secrets ─────────────────────────────────────────────
+  # ── Secret detection ───────────────────────────────────────────────────
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.0
     hooks:
       - id: gitleaks
 
-  # ── Formatage / lint Python ──────────────────────────────────────────
+  # ── Python formatting / linting ───────────────────────────────────────
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.12
     hooks:
@@ -45,13 +45,13 @@ repos:
         pass_filenames: false
         types: [python]
 
-  # ── Lint des workflows GitHub Actions ────────────────────────────────
+  # ── GitHub Actions workflow linting ───────────────────────────────────
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.12
     hooks:
       - id: actionlint
 
-  # ── Audit sécurité (en pre-push pour ne pas ralentir les commits) ────
+  # ── Security audit (pre-push stage to avoid slowing down commits) ─────
   - repo: https://github.com/pypa/pip-audit
     rev: v2.10.0
     hooks:

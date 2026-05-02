@@ -1,23 +1,23 @@
 # ─── Git LFS ─────────────────────────────────────────────────────────────────
-# Configuration générique pour les formats de données les plus courants.
-# Étendre selon les besoins du projet (voir https://git-lfs.com/).
+# Generic setup for common data formats. Extend as needed for your project
+# (see https://git-lfs.com/).
 
-# Données tabulaires volumineuses
+# Large tabular data
 *.csv filter=lfs diff=lfs merge=lfs -text
 *.parquet filter=lfs diff=lfs merge=lfs -text
 
-# Arrays NumPy
+# NumPy arrays
 *.npy filter=lfs diff=lfs merge=lfs -text
 *.npz filter=lfs diff=lfs merge=lfs -text
 
-# Modèles ML / poids
+# ML models / weights
 *.pkl filter=lfs diff=lfs merge=lfs -text
 *.joblib filter=lfs diff=lfs merge=lfs -text
 *.pt filter=lfs diff=lfs merge=lfs -text
 *.onnx filter=lfs diff=lfs merge=lfs -text
 *.safetensors filter=lfs diff=lfs merge=lfs -text
 
-# Images haute résolution / médias
+# High-resolution images / media
 *.png filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *.jpeg filter=lfs diff=lfs merge=lfs -text
@@ -27,6 +27,6 @@
 *.tar.gz filter=lfs diff=lfs merge=lfs -text
 *.tgz filter=lfs diff=lfs merge=lfs -text
 
-# Bases de données / formats binaires
+# Databases / binary formats
 *.db filter=lfs diff=lfs merge=lfs -text
 *.sqlite filter=lfs diff=lfs merge=lfs -text

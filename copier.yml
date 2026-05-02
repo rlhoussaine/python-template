@@ -10,27 +10,27 @@ _envops:
 
 project_name:
   type: str
-  help: "Nom du projet (ex: Spectral Anomaly Detection)"
-  validator: "{% if not project_name %}Requis{% endif %}"
+  help: "Project name (e.g., Spectral Anomaly Detection)"
+  validator: "{% if not project_name %}Required{% endif %}"
 
 project_slug:
   type: str
-  help: "Slug Python (snake_case)"
+  help: "Python package slug (snake_case)"
   default: "{{ project_name | lower | replace(' ', '_') | replace('-', '_') }}"
 
 project_description:
   type: str
-  help: "Description courte"
+  help: "Short description"
   default: "A Python project."
 
 author:
   type: str
-  help: "Auteur"
+  help: "Author"
   default: "Your Name"
 
 github_username:
   type: str
-  help: "Username GitHub"
+  help: "GitHub username"
   default: "your-username"
 
 email:
@@ -40,34 +40,34 @@ email:
 
 python_version:
   type: str
-  help: "Version Python minimale"
+  help: "Minimum Python version"
   default: "3.12"
   choices: ["3.11", "3.12", "3.13", "3.14"]
 
 license:
   type: str
-  help: "Licence"
+  help: "License"
   default: "MIT"
   choices: ["MIT", "Apache-2.0", "GPL-3.0", "Proprietary"]
 
 use_docker:
   type: bool
-  help: "Inclure un Dockerfile ?"
+  help: "Include a Dockerfile?"
   default: true
 
 use_github_actions:
   type: bool
-  help: "Inclure CI GitHub Actions ?"
+  help: "Include GitHub Actions CI?"
   default: true
 
 use_pre_commit:
   type: bool
-  help: "Inclure pre-commit ?"
+  help: "Include pre-commit?"
   default: true
 
 task_runner:
   type: str
-  help: "Orchestrateur de tâches (just = recommandé 2026, multiplateforme)"
+  help: "Task runner (just = recommended, cross-platform)"
   default: "just"
   choices:
     - just
@@ -76,37 +76,37 @@ task_runner:
 
 use_docs:
   type: bool
-  help: "Inclure MkDocs ?"
+  help: "Include MkDocs?"
   default: false
 
 use_cli:
   type: bool
-  help: "Inclure un CLI (click) ?"
+  help: "Include a CLI (click)?"
   default: false
 
 use_data:
   type: bool
-  help: "Inclure un dossier data/ avec Git LFS ?"
+  help: "Include a data/ folder with Git LFS?"
   default: false
 
 use_notebooks:
   type: bool
-  help: "Inclure un dossier notebooks/ ?"
+  help: "Include a notebooks/ folder?"
   default: false
 
 use_hypothesis:
   type: bool
-  help: "Inclure Hypothesis (property-based testing) ?"
+  help: "Include Hypothesis (property-based testing)?"
   default: false
 
 use_testcontainers:
   type: bool
-  help: "Inclure Testcontainers (tests d'intégration avec Docker) ?"
+  help: "Include Testcontainers (integration tests with Docker)?"
   default: false
 
 use_pypi_publish:
   type: bool
-  help: "Publier sur PyPI via Trusted Publishing OIDC (workflow release) ?"
+  help: "Publish to PyPI via Trusted Publishing OIDC (release workflow)?"
   default: false
 
 # ─── Conditional exclusions ──────────────────────────────────────────────────

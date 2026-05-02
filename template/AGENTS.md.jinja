@@ -1,63 +1,63 @@
-# AGENTS.md — Directives pour les assistants IA
+# AGENTS.md — Guidelines for AI assistants
 
-Ce fichier guide les assistants IA (GitHub Copilot, Cursor, Claude)
-pour qu'ils respectent les conventions de ce projet.
+This file helps AI assistants (GitHub Copilot, Cursor, Claude, and similar tools)
+follow this project's conventions.
 
-## Structure du projet
+## Project layout
 
-- Le code source est dans `src/{{ project_slug }}/`
-- Les tests sont dans `tests/ut/` (unitaires) et `tests/it/` (intégration)
-- Ne jamais créer de fichiers à la racine en dehors des fichiers de configuration
+- Source code lives in `src/{{ project_slug }}/`
+- Tests live in `tests/ut/` (unit) and `tests/it/` (integration)
+- Do not create new root-level files except standard configuration files
 
-## Style de code
+## Code style
 
-- Formatter : **Ruff** (`uv run ruff format`)
-- Linter : **Ruff** (`uv run ruff check`)
-- Type checker : **ty** (`uv run ty check src/`)
-- Longueur de ligne : 100 caractères
-- Toutes les fonctions publiques doivent avoir des type hints
+- Formatter: **Ruff** (`uv run ruff format`)
+- Linter: **Ruff** (`uv run ruff check`)
+- Type checker: **ty** (`uv run ty check src/`)
+- Line length: 100 characters
+- All public functions must have type hints
 
-## Conventions Git
+## Git conventions
 
-Ce projet suit les **Conventional Commits** :
-- `feat:` nouvelle fonctionnalité
-- `fix:` correction de bug
-- `docs:` documentation uniquement
-- `refactor:` refactoring sans changement de comportement
-- `test:` ajout ou modification de tests
-- `chore:` maintenance (deps, CI...)
+This project follows **Conventional Commits**:
+- `feat:` new feature
+- `fix:` bug fix
+- `docs:` documentation only
+- `refactor:` refactor without behavior change
+- `test:` add or change tests
+- `chore:` maintenance (deps, CI, etc.)
 
-## Gestion des dépendances
+## Dependencies
 
-- Gestionnaire : **uv**
-- Ajouter une dépendance : `uv add <package>`
-- Ajouter une dépendance de dev : `uv add --group dev <package>`
-- Ne jamais modifier `pyproject.toml` manuellement pour les dépendances
+- Package manager: **uv**
+- Add a dependency: `uv add <package>`
+- Add a dev dependency: `uv add --group dev <package>`
+- Do not edit `pyproject.toml` by hand for dependency entries
 
 ## Tests
 
-- Lancer tous les tests : `uv run pytest`
-- Tests unitaires uniquement : `uv run pytest tests/ut/`
-- Avec couverture : `uv run pytest --cov`
-- Chaque nouvelle fonctionnalité doit avoir un test unitaire correspondant
+- Run all tests: `uv run pytest`
+- Unit tests only: `uv run pytest tests/ut/`
+- With coverage: `uv run pytest --cov`
+- Every new feature should have a matching unit test
 
-## Orchestrateur de tâches
+## Task runner
 
 {% if task_runner == "just" or task_runner == "both" %}
-Ce projet utilise **Just** comme orchestrateur de tâches (multiplateforme, auto-documenté).
+This project uses **Just** as the task runner (cross-platform, self-documented).
 
-- Lister toutes les commandes : `just`
-- Installer : `just install`
-- Tester : `just test` (avec args : `just test -k motif`)
-- Linter + formater : `just lint`
-- Audit sécurité : `just audit`
+- List commands: `just`
+- Install: `just install`
+- Test: `just test` (pass args: `just test -k pattern`)
+- Lint + format: `just lint`
+- Security audit: `just audit`
 {% endif %}
 {% if task_runner == "make" or task_runner == "both" %}
-Ce projet utilise **Make** comme orchestrateur de tâches.
+This project uses **Make** as the task runner.
 
-- Lister les commandes : `make help`
-- Installer : `make install`
-- Tester : `make test`
+- List commands: `make help`
+- Install: `make install`
+- Test: `make test`
 {% endif %}
 
-NE PAS lancer les commandes Python directement (`python -m pytest`, etc.). Utiliser systématiquement `uv run` ou les recettes du task runner.
+DO NOT run Python commands directly (`python -m pytest`, etc.). Always use `uv run` or the task runner recipes.
