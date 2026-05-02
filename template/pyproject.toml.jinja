@@ -19,6 +19,13 @@ classifiers = [
     "Programming Language :: Python :: {{ python_version }}",
     "Operating System :: OS Independent",
     "Typing :: Typed",
+{% if license == "MIT" %}
+    "License :: OSI Approved :: MIT License",
+{% elif license == "Apache-2.0" %}
+    "License :: OSI Approved :: Apache Software License",
+{% elif license == "GPL-3.0" %}
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+{% endif %}
 ]
 dependencies = []
 

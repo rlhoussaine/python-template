@@ -134,10 +134,13 @@ jobs:
             --data task_runner=just \
             --trust
 
+      - name: Install actionlint
+        run: |
+          bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          echo "$PWD" >> "$GITHUB_PATH"
+
       - name: Run actionlint
-        uses: rhysd/actionlint@v1.7.7
-        with:
-          path: /tmp/test-actions/.github/workflows/
+        run: actionlint /tmp/test-actions/.github/workflows/*.yml
 
   # ── Validation Docker build ──────────────────────────────────────────────
   validate-docker:

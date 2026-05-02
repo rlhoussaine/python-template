@@ -154,7 +154,15 @@ Ce projet utilise [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publis
 ├── .github/
 │   ├── workflows/
 │   │   ├── ci.yml
-│   │   └── release.yml
+│   │   ├── release.yml
+│   │   ├── codeql.yml
+│   │   ├── scorecard.yml
+{% if use_pypi_publish %}
+│   │   └── publish.yml
+{% else %}
+│   │   └── ...
+{% endif %}
+│   ├── dependabot.yml
 │   ├── ISSUE_TEMPLATE/
 │   └── pull_request_template.md
 {% endif %}
