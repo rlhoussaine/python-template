@@ -74,6 +74,9 @@ cli = ["click>=8.1"]
 [tool.hatch.build.targets.wheel]
 packages = ["src/{{ project_slug }}"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/{{ project_slug }}/py.typed" = "{{ project_slug }}/py.typed"
+
 # ─── Ruff ────────────────────────────────────────────────────────────────────
 [tool.ruff]
 target-version = "py{{ python_version | replace('.', '') }}"
@@ -88,6 +91,7 @@ select = [
     "I",     # isort
     "N",     # pep8-naming
     "UP",    # pyupgrade
+    "D",     # pydocstyle
     "B",     # flake8-bugbear
     "SIM",   # flake8-simplify
     "RUF",   # ruff-specific
@@ -100,13 +104,19 @@ select = [
     "C4",    # comprehensions
     "ARG",   # unused arguments
 ]
+ignore = [
+    "D100",  # missing docstring in public module
+    "D104",  # missing docstring in public package
+    "D203",  # one-blank-line-before-class (conflicts with D211)
+    "D213",  # multi-line-summary-second-line (conflicts with D212)
+]
 
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = 80
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "ARG001"]
+"tests/**/*.py" = ["S101", "ARG001", "D"]
 "**/__init__.py" = ["F401"]
 
 [tool.ruff.lint.isort]
@@ -132,7 +142,7 @@ omit = ["tests/*"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-fail_under = 60
+fail_under = 80
 exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",

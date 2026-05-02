@@ -109,6 +109,58 @@ jobs:
           uv run ruff format --check src/ tests/
         working-directory: /tmp/test-project
 
+  # ── Validation du script init_project.py ──────────────────────────────────
+  validate-init-script:
+    name: Validate init_project.py
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Copy repo to test directory
+        run: cp -r . /tmp/test-init
+
+      - name: Run init_project.py non-interactively
+        working-directory: /tmp/test-init
+        run: |
+          python scripts/init_project.py <<EOF
+          Test Project
+          test_project
+          A test project
+          CI Bot
+          ci-bot
+          ci@example.com
+          3.12
+          MIT
+          y
+          y
+          y
+          n
+          n
+          n
+          n
+          n
+          just
+          n
+          EOF
+
+      - name: Verify key files exist
+        working-directory: /tmp/test-init
+        run: |
+          test -f src/test_project/__init__.py
+          test -f pyproject.toml
+          test -f justfile
+
   # ── Validation des workflows GitHub Actions ──────────────────────────────
   validate-workflows:
     name: Validate GitHub Actions Workflows

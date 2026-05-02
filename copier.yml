@@ -120,4 +120,5 @@ _exclude:
   - "{% if not use_github_actions %}.github/pull_request_template.md{% endif %}"
   - "{% if task_runner == 'just' %}Makefile{% endif %}"
   - "{% if task_runner == 'make' %}justfile{% endif %}"
+  - "{% if not use_github_actions %}SECURITY.md{% endif %}"
   - "{% if not use_pypi_publish %}.github/workflows/publish.yml{% endif %}"

@@ -1,8 +1,18 @@
+{% if use_github_actions %}
+# Changelog
+
+This file is managed automatically by [release-please](https://github.com/googleapis/release-please).
+Do not edit manually.
+{% else %}
 # Changelog
 
 All notable changes to **{{ project_name }}** will be documented in this file.
 
-## [0.1.0] - Unreleased
+The format is based on [Keep a Changelog](https://keepachangelog.com/),
+and this project adheres to [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
 
 ### Added
 - Initial project structure
+{% endif %}
