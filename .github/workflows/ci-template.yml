@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — vérifier sur https://github.com/astral-sh/setup-uv/releases
         with:
           enable-cache: true
 
@@ -30,11 +30,12 @@ jobs:
         run: uv tool install ruff
 
       - name: Ruff sur les fichiers .jinja
+        continue-on-error: true
         run: |
           find template/ -name "*.jinja" | while read f; do
-            # Strip jinja tags for linting
+            # Strip jinja tags for linting — résultat informatif uniquement
             sed 's/{[%{].*[%}]}//g' "$f" > /tmp/lint_target.py
-            ruff check /tmp/lint_target.py || true
+            ruff check /tmp/lint_target.py
           done
 
       - name: Validate YAML sources
@@ -53,7 +54,7 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
         options:
           - label: "minimal"
-            extra_args: ""
+            extra_args: "--data use_docker=false --data use_github_actions=false --data use_pre_commit=false"
           - label: "with_just"
             extra_args: "--data task_runner=just"
           - label: "with_make"
@@ -68,15 +69,15 @@ jobs:
             extra_args: "--data use_docker=true --data use_github_actions=true --data use_pre_commit=false --data use_docs=true --data use_cli=true --data use_hypothesis=true --data use_testcontainers=true --data task_runner=just --data use_pypi_publish=true"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5 # TODO: pin to SHA — vérifier sur https://github.com/actions/setup-python/releases
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — vérifier sur https://github.com/astral-sh/setup-uv/releases
         with:
           enable-cache: true
 
@@ -115,15 +116,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5 # TODO: pin to SHA — vérifier sur https://github.com/actions/setup-python/releases
         with:
           python-version: "3.12"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — vérifier sur https://github.com/astral-sh/setup-uv/releases
         with:
           enable-cache: true
 
@@ -168,10 +169,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install uv and copier
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — vérifier sur https://github.com/astral-sh/setup-uv/releases
       - run: uv tool install copier
 
       - name: Generate full project
@@ -201,13 +202,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3 # TODO: pin to SHA — vérifier sur https://github.com/docker/setup-buildx-action/releases
 
       - name: Install copier
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — vérifier sur https://github.com/astral-sh/setup-uv/releases
       - run: uv tool install copier
 
       - name: Generate project with Docker
@@ -249,10 +250,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — vérifier sur https://github.com/astral-sh/setup-uv/releases
 
       - name: Install pip-audit
         run: uv tool install pip-audit

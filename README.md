@@ -20,7 +20,7 @@ Template [Copier](https://copier.readthedocs.io/) to bootstrap a modern Python p
   without uv binary, non-root user.
 - 🔒 **Modernized pre-commit** — gitleaks, actionlint, detect-private-key, mixed-line-ending.
 - 📦 **Enriched pyproject.toml** — project URLs, PyPI classifiers, extended Ruff rules,
-  coverage `fail_under=60`.
+  coverage `fail_under=80`.
 
 ## Utilisation
 

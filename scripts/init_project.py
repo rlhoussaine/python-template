@@ -87,8 +87,8 @@ def collect_answers():
 def render_string(text, ctx):
     """Render Jinja templates. Uses jinja2 if available, else basic substitution."""
     try:
-        from jinja2 import Environment
-        env = Environment(keep_trailing_newline=True)
+        from jinja2 import Environment, StrictUndefined
+        env = Environment(keep_trailing_newline=True, undefined=StrictUndefined)
         return env.from_string(text).render(**ctx)
     except ImportError:
         # Minimal fallback: supports simple {% if flag %}...{% endif %} blocks.
