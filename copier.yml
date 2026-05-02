@@ -122,3 +122,4 @@ _exclude:
   - "{% if task_runner == 'make' %}justfile{% endif %}"
   - "{% if not use_github_actions %}SECURITY.md{% endif %}"
   - "{% if not use_pypi_publish %}.github/workflows/publish.yml{% endif %}"
+  - "{% if not use_docker %}.renovaterc.json{% endif %}"
