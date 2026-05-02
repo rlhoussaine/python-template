@@ -10,5 +10,4 @@ def postgres():
     with PostgresContainer("postgres:16") as pg:
         yield pg
 {% else %}
-import pytest  # noqa: F401
 {% endif %}

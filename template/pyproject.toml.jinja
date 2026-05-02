@@ -74,6 +74,9 @@ select = [
     "PT",   # flake8-pytest-style
 ]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]  # assert statements are expected in tests
+
 [tool.ruff.lint.isort]
 known-first-party = ["{{ project_slug }}"]
 
