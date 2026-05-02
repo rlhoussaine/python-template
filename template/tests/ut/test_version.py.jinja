@@ -1,9 +1,10 @@
 """Basic tests."""
 
-{%- if use_hypothesis %}
-from hypothesis import given, strategies as st
-{%- endif %}
 import pytest
+{%- if use_hypothesis %}
+from hypothesis import given
+from hypothesis import strategies as st
+{%- endif %}
 
 from {{ project_slug }} import __version__
 
@@ -22,4 +23,4 @@ def test_version():
 def test_example_property(s: str) -> None:
     """Example property-based test - adapt to your domain."""
     assert isinstance(s, str)
-{%- endif %}
+{% endif %}{{ "\n" if not use_hypothesis else "" -}}
