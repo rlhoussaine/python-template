@@ -40,3 +40,24 @@ Ce projet suit les **Conventional Commits** :
 - Tests unitaires uniquement : `uv run pytest tests/ut/`
 - Avec couverture : `uv run pytest --cov`
 - Chaque nouvelle fonctionnalité doit avoir un test unitaire correspondant
+
+## Orchestrateur de tâches
+
+{% if task_runner == "just" or task_runner == "both" %}
+Ce projet utilise **Just** comme orchestrateur de tâches (multiplateforme, auto-documenté).
+
+- Lister toutes les commandes : `just`
+- Installer : `just install`
+- Tester : `just test` (avec args : `just test -k motif`)
+- Linter + formater : `just lint`
+- Audit sécurité : `just audit`
+{% endif %}
+{% if task_runner == "make" or task_runner == "both" %}
+Ce projet utilise **Make** comme orchestrateur de tâches.
+
+- Lister les commandes : `make help`
+- Installer : `make install`
+- Tester : `make test`
+{% endif %}
+
+NE PAS lancer les commandes Python directement (`python -m pytest`, etc.). Utiliser systématiquement `uv run` ou les recettes du task runner.

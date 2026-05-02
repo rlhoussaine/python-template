@@ -16,20 +16,41 @@ uv sync --all-groups
 
 ## Développement
 
+{% if task_runner == "just" or task_runner == "both" %}
+Ce projet utilise [Just](https://github.com/casey/just) comme orchestrateur de tâches.
+
 ```bash
-# Lancer les tests
-uv run pytest
+just              # liste toutes les commandes disponibles
+just install      # installer toutes les dépendances
+just test         # lancer les tests
+just lint         # formater + linter + type-check (auto-fix)
+just check        # vérifier sans modifier (équivalent CI)
+just audit        # audit de sécurité des dépendances
+```
 
-# Lancer les tests avec couverture
-uv run pytest --cov
+Pour installer Just : `cargo install just` ou voir [les autres méthodes](https://github.com/casey/just#installation).
 
-# Vérifier le code (lint + type check)
-uv run ruff check src/ tests/
-uv run ty check src/
-uv run deptry src/
+{% endif %}
+{% if task_runner == "make" or task_runner == "both" %}
+```bash
+make help         # liste toutes les commandes
+make install      # installer les dépendances
+make test         # lancer les tests
+make lint         # vérifier le code
+make format       # formatter le code
+```
 
-# Formatter le code
-uv run ruff format src/ tests/
+{% endif %}
+
+Sans task runner, les commandes équivalentes :
+
+```bash
+uv sync --all-groups                                 # install
+uv run pytest --cov                                  # test
+uv run ruff format src/ tests/                       # format
+uv run ruff check --fix src/ tests/                  # lint
+uv run ty check src/                                 # type-check
+uv run pip-audit                                     # audit
 ```
 
 {% if use_docker %}
@@ -54,7 +75,7 @@ docker run --rm -it {{ project_slug }}:dev
 ```
 {% endif %}
 
-{% if use_data -%}
+{% if use_data %}
 ## Données
 
 Le dossier `data/` est versionné avec **Git LFS**. Assurez-vous d'avoir Git LFS installé :
@@ -64,9 +85,38 @@ git lfs install   # une seule fois par machine
 git clone ...     # LFS pull automatique au clone
 ```
 
-Les formats trackés par LFS sont définis dans `.gitattributes`.
+Les formats trackés par défaut sont les plus courants (CSV, Parquet, NPY, modèles ML,
+images, archives). Pour ajouter des formats spécifiques à votre domaine, éditer
+`.gitattributes` :
 
-{% endif -%}
+```bash
+# Exemple pour des formats scientifiques
+*.h5 filter=lfs diff=lfs merge=lfs -text
+*.tif filter=lfs diff=lfs merge=lfs -text
+```
+
+{% endif %}
+
+{% if use_pypi_publish %}
+## Publication sur PyPI
+
+Ce projet utilise [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/)
+(OIDC) — aucun token API à gérer.
+
+**Configuration une seule fois** :
+
+1. Créer le projet sur PyPI : https://pypi.org/manage/account/publishing/
+2. Renseigner :
+   - Repository owner : `{{ github_username }}`
+   - Repository name : `{{ project_slug }}`
+   - Workflow : `publish.yml`
+   - Environment : `pypi`
+3. Créer l'environment `pypi` dans GitHub : Settings → Environments → New environment
+
+**Publier une version** : créer une GitHub Release avec un tag `vX.Y.Z`. Le workflow
+`publish.yml` se déclenche automatiquement.
+
+{% endif %}
 
 ## Structure du projet
 
@@ -80,22 +130,27 @@ Les formats trackés par LFS sont définis dans `.gitattributes`.
 │   ├── conftest.py
 │   ├── ut/
 │   └── it/
-{% if use_data -%}
+{% if use_data %}
 ├── data/             # Données versionnées (Git LFS)
-{% endif -%}
-{% if use_notebooks -%}
+{% endif %}
+{% if use_notebooks %}
 ├── notebooks/        # Notebooks d'exploration
-{% endif -%}
+{% endif %}
 ├── AGENTS.md         # Directives IA / conventions du projet
 ├── pyproject.toml
+{% if task_runner == "just" or task_runner == "both" %}
+├── justfile
+{% endif %}
+{% if task_runner == "make" or task_runner == "both" %}
 ├── Makefile
-{% if use_docker -%}
-├── Dockerfile       # Docker reproductible : versionner `uv.lock` (p.ex. `uv sync` / `uv lock`) avant `docker build`
-{% endif -%}
-{% if use_pre_commit -%}
+{% endif %}
+{% if use_docker %}
+├── Dockerfile
+{% endif %}
+{% if use_pre_commit %}
 ├── .pre-commit-config.yaml
-{% endif -%}
-{% if use_github_actions -%}
+{% endif %}
+{% if use_github_actions %}
 ├── .github/
 │   ├── workflows/
 │   │   ├── ci.yml

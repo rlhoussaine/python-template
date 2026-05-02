@@ -5,7 +5,22 @@ Template [Copier](https://copier.readthedocs.io/) to bootstrap a modern Python p
 ![CI Template](https://github.com/rlhoussaine/python-template/actions/workflows/ci-template.yml/badge.svg)
 ![Security](https://github.com/rlhoussaine/python-template/actions/workflows/ci-template.yml/badge.svg?job=security)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Copier](https://img.shields.io/badge/copier-9.0%2B-green.svg)
+![Copier](https://img.shields.io/badge/copier-9.4%2B-green.svg)
+
+## What's new in v0.2.0
+
+- 🎯 **Just is now the default task runner** (multiplatform, auto-documented).
+  Make remains available via `task_runner=make`.
+- 🔐 **PyPI Trusted Publishing (OIDC)** — opt-in via `use_pypi_publish=true`,
+  no API tokens to rotate.
+- 🛡️ **OpenSSF Scorecard, CodeQL, and Dependabot** are now included by default
+  with `use_github_actions=true`.
+- ⏱️ **CI hardening** — concurrency groups, timeouts, least-privilege permissions per job.
+- 🐳 **Reproducible Docker builds** — pinned uv, BuildKit cache mounts, prod image
+  without uv binary, non-root user.
+- 🔒 **Modernized pre-commit** — gitleaks, actionlint, detect-private-key, mixed-line-ending.
+- 📦 **Enriched pyproject.toml** — project URLs, PyPI classifiers, extended Ruff rules,
+  coverage `fail_under=60`.
 
 ## Utilisation
 
@@ -45,12 +60,17 @@ The script asks the same questions as Copier and configures the project.
 | **deptry** | Dependency hygiene checks |
 | **pip-audit** | Security audit of dependencies |
 | **pytest** + **coverage** | Unit and integration tests |
+| **Just** | Task runner moderne, multiplateforme (recommandé) |
 | **pre-commit** | Automated hooks (optional) |
 | **GitHub Actions** | CI/CD (optional) |
 | **Docker** | Multi-stage containerization (optional) |
 | **MkDocs** | Documentation (optional) |
 | **data/ + Git LFS** | Data folder with LFS tracking (optional) |
 | **notebooks/** | Exploration notebooks folder (optional) |
+| **OIDC publish** | Publication PyPI sans secrets via Trusted Publishing (optionnel) |
+| **OpenSSF Scorecard** | Audit de sécurité automatisé (badge) |
+| **CodeQL** | Analyse sémantique de sécurité |
+| **Dependabot** | Mises à jour automatiques des dépendances |
 
 💡 **Note sur `uv.lock` et Docker :** Si tu utilises l'option Docker, génère et commite
 `uv.lock` avant ton premier `docker build` :
@@ -77,13 +97,18 @@ my-project/
 ├── data/                       # si use_data (Git LFS)
 ├── notebooks/                  # si use_notebooks
 ├── pyproject.toml
-├── Makefile
-├── Dockerfile                  # si use_docker ; requiert un `uv.lock` versionné pour un build reproductible
-├── .pre-commit-config.yaml      # si use_pre_commit
+├── justfile                    # si task_runner=just (défaut) ou both
+├── Makefile                    # si task_runner=make ou both
+├── Dockerfile                  # si use_docker ; requiert un `uv.lock` versionné
+├── .pre-commit-config.yaml     # si use_pre_commit
 ├── .github/
 │   ├── workflows/
 │   │   ├── ci.yml              # si use_github_actions
-│   │   └── release.yml          # si use_github_actions (release-please)
+│   │   ├── release.yml         # si use_github_actions (release-please)
+│   │   ├── publish.yml         # si use_pypi_publish (Trusted Publishing OIDC)
+│   │   ├── scorecard.yml       # si use_github_actions (OpenSSF)
+│   │   └── codeql.yml          # si use_github_actions (CodeQL)
+│   ├── dependabot.yml          # si use_github_actions
 │   ├── ISSUE_TEMPLATE/
 │   │   ├── bug_report.yml
 │   │   └── feature_request.yml
