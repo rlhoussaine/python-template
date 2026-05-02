@@ -1,3 +1,3 @@
 """Shared test fixtures."""
 
-import pytest
+import pytest  # noqa: F401
