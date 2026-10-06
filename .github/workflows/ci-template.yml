@@ -9,268 +9,97 @@ on:
 permissions:
   contents: read
 
-env:
-  UV_CACHE_DIR: ~/.cache/uv
+concurrency:
+  group: ci-template-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  # ── Template source linting ─────────────────────────────────────────────
-  lint-sources:
-    name: Lint Template Sources
+  # ── Template repository sources ─────────────────────────────────────────
+  lint:
+    name: Lint template sources
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — verify at https://github.com/astral-sh/setup-uv/releases
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.13"
           enable-cache: true
 
-      - name: Install ruff
-        run: uv tool install ruff
+      - run: uv sync --locked
 
-      - name: Ruff on .jinja files
-        continue-on-error: true
+      - name: Ruff (template tests)
         run: |
-          find template/ -name "*.jinja" | while read f; do
-            # Strip jinja tags for linting — informational only
-            sed 's/{[%{].*[%}]}//g' "$f" > /tmp/lint_target.py
-            ruff check /tmp/lint_target.py
-          done
+          uv run ruff format --check tests/
+          uv run ruff check --output-format=github tests/
 
-      - name: Validate YAML sources
-        run: |
-          uv tool install check-jsonschema
-          find . -name "*.yml" -not -path "./.git/*" | xargs uv run check-jsonschema --check-metaschema || true
+      - name: actionlint (this repository's workflows)
+        run: uv run actionlint .github/workflows/*.yml
 
-  # ── Template validation (generation + tests) ─────────────────────────────
-  validate-template:
-    name: Validate Generated Project
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11", "3.12", "3.13"]
-        options:
-          - label: "minimal"
-            extra_args: "--data use_docker=false --data use_github_actions=false --data use_pre_commit=false"
-          - label: "with_just"
-            extra_args: "--data task_runner=just"
-          - label: "with_make"
-            extra_args: "--data task_runner=make"
-          - label: "with_publish"
-            extra_args: "--data use_pypi_publish=true"
-          - label: "full"
-            extra_args: "--data use_docker=true --data use_github_actions=true --data use_pre_commit=false --data use_docs=true --data use_cli=true --data use_hypothesis=true --data task_runner=just --data use_pypi_publish=true"
-          - label: "hypothesis"
-            extra_args: "--data use_hypothesis=true"
-          - label: "full_hypothesis_testcontainers"
-            extra_args: "--data use_docker=true --data use_github_actions=true --data use_pre_commit=false --data use_docs=true --data use_cli=true --data use_hypothesis=true --data use_testcontainers=true --data task_runner=just --data use_pypi_publish=true"
-
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5 # TODO: pin to SHA — verify at https://github.com/actions/setup-python/releases
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — verify at https://github.com/astral-sh/setup-uv/releases
-        with:
-          enable-cache: true
-
-      - name: Install Copier
-        run: uv tool install copier
-
-      - name: Generate project from template
-        run: |
-          copier copy . /tmp/test-project \
-            --defaults \
-            --data project_name="Test Project" \
-            --data author="CI Bot" \
-            --data github_username="ci-bot" \
-            --data email="ci@example.com" \
-            --data python_version="${{ matrix.python-version }}" \
-            ${{ matrix.options.extra_args }} \
-            --trust
-
-      - name: Install generated project
-        run: uv sync --all-groups
-        working-directory: /tmp/test-project
-
-      - name: Run tests on generated project
-        run: uv run pytest -q
-        working-directory: /tmp/test-project
-
-      - name: Lint generated project
-        run: |
-          uv run ruff check src/ tests/
-          uv run ruff format --check src/ tests/
-        working-directory: /tmp/test-project
-
-  # ── init_project.py script validation ────────────────────────────────────
-  validate-init-script:
-    name: Validate init_project.py
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5 # TODO: pin to SHA — verify at https://github.com/actions/setup-python/releases
-        with:
-          python-version: "3.12"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — verify at https://github.com/astral-sh/setup-uv/releases
-        with:
-          enable-cache: true
-
-      - name: Copy repo to test directory
-        run: cp -r . /tmp/test-init
-
-      - name: Run init_project.py non-interactively
-        working-directory: /tmp/test-init
-        run: |
-          python scripts/init_project.py <<EOF
-          Test Project
-          test_project
-          A test project
-          CI Bot
-          ci-bot
-          ci@example.com
-          3.12
-          MIT
-          y
-          y
-          y
-          n
-          n
-          n
-          n
-          n
-          n
-          just
-          n
-          EOF
-
-      - name: Verify key files exist
-        working-directory: /tmp/test-init
-        run: |
-          test -f src/test_project/__init__.py
-          test -f pyproject.toml
-          test -f justfile
-
-  # ── GitHub Actions workflow validation ───────────────────────────────────
-  validate-workflows:
-    name: Validate GitHub Actions Workflows
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Install uv and copier
-        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — verify at https://github.com/astral-sh/setup-uv/releases
-      - run: uv tool install copier
-
-      - name: Generate full project
-        run: |
-          copier copy . /tmp/test-actions \
-            --defaults \
-            --data project_name="Test" \
-            --data author="CI" \
-            --data github_username="ci" \
-            --data email="ci@example.com" \
-            --data use_github_actions=true \
-            --data use_pypi_publish=true \
-            --data task_runner=just \
-            --trust
-
-      - name: Install actionlint
-        run: |
-          bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          echo "$PWD" >> "$GITHUB_PATH"
-
-      - name: Run actionlint
-        run: actionlint /tmp/test-actions/.github/workflows/*.yml
-
-  # ── Docker build validation ────────────────────────────────────────────
-  validate-docker:
-    name: Validate Docker build
+  # ── Render every option combination, regression tests ───────────────────
+  render:
+    name: Render & static checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3 # TODO: pin to SHA — verify at https://github.com/docker/setup-buildx-action/releases
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.13"
+          enable-cache: true
 
-      - name: Install copier
-        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — verify at https://github.com/astral-sh/setup-uv/releases
-      - run: uv tool install copier
+      - run: uv sync --locked
 
-      - name: Generate project with Docker
-        run: |
-          copier copy . /tmp/test-docker \
-            --defaults \
-            --data project_name="Test" \
-            --data author="CI" \
-            --data github_username="ci" \
-            --data email="ci@example.com" \
-            --data use_docker=true \
-            --trust
-          cd /tmp/test-docker
-          uv sync
+      - name: pytest (render + regressions)
+        run: uv run pytest -m "not e2e and not docker" -n auto
 
-      - name: Build prod image
-        run: |
-          cd /tmp/test-docker
-          docker buildx build --target prod -t test:prod --load .
-
-      - name: Verify uv is NOT in prod image
-        run: |
-          if docker run --rm test:prod which uv 2>/dev/null; then
-            echo "ERROR: uv binary should not be in prod image"
-            exit 1
-          fi
-
-      - name: Verify non-root user
-        run: |
-          USER=$(docker run --rm test:prod id -u)
-          if [ "$USER" = "0" ]; then
-            echo "ERROR: prod image must run as non-root"
-            exit 1
-          fi
-
-  # ── Security audit ───────────────────────────────────────────────────────
-  security:
-    name: Security Audit
+  # ── Generated projects pass `just check` and `just test` ────────────────
+  e2e:
+    name: End-to-end (generated projects)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5 # TODO: pin to SHA — verify at https://github.com/astral-sh/setup-uv/releases
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.13"
+          enable-cache: true
 
-      - name: Install pip-audit
-        run: uv tool install pip-audit
+      - run: uv sync --locked
 
-      - name: Generate project for audit
-        run: |
-          uv tool install copier
-          copier copy . /tmp/audit-project \
-            --defaults \
-            --data project_name="Audit Project" \
-            --data author="CI Bot" \
-            --data github_username="ci-bot" \
-            --data email="ci@example.com" \
-            --trust
+      # uv downloads the interpreters (3.11 → 3.14) the generated projects need.
+      - name: pytest (generate, lock, check, test, build, update)
+        run: uv run pytest -m e2e -n auto
 
-      - name: pip-audit
-        run: |
-          cd /tmp/audit-project
-          uv sync --all-groups
-          uv run pip-audit
+  # ── Docker image of a generated project ─────────────────────────────────
+  docker:
+    name: Docker build (generated project)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - run: uv sync --locked
+
+      - name: pytest (prod image without uv nor sources, non-root)
+        run: uv run pytest -m docker
