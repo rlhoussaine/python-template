@@ -17,10 +17,17 @@ venv/
 *.swp
 *.swo
 
-# Testing
+# Testing / tooling caches
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
 .pytest_cache/
+.hypothesis/
+.ruff_cache/
+
+# Release artifacts
+sbom.cdx.json
 
 # OS
 .DS_Store
@@ -28,10 +35,6 @@ Thumbs.db
 
 # Docs
 site/
-
-# Data (LFS stores large files; gitignore covers the rest)
-data/*
-!data/.gitkeep
 
 # Notebooks
 .ipynb_checkpoints/

@@ -8,168 +8,147 @@
 # Install uv (if needed)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
+{% if ci_provider != "none" %}
 # Clone and install
-git clone https://github.com/{{ github_username }}/{{ project_slug }}.git
+git clone {{ repository_url }}.git
 cd {{ project_slug }}
+{% endif %}
 uv sync --all-groups
 ```
 
+The Python version is pinned in `.python-version` and the minimum uv version in
+`[tool.uv] required-version` (`pyproject.toml`).
+{% if use_cli %}
+
+## Usage
+
+```bash
+uv run {{ project_slug }} --help
+uv run {{ project_slug }} hello Ada
+uv run {{ project_slug }} --log-level DEBUG hello
+```
+{% endif %}
+
 ## Development
 
-{% if task_runner == "just" or task_runner == "both" %}
-This project uses [Just](https://github.com/casey/just) as the task runner.
+This project uses [Just](https://github.com/casey/just) as the task runner
+(`uv tool install rust-just` or see [other install methods](https://github.com/casey/just#installation)).
 
 ```bash
 just              # list all available commands
-just install      # install all dependencies
-just test         # run tests
-just lint         # format + lint + type-check (auto-fix)
+just install      # install all dependencies + git hooks
+just test         # run tests with the coverage gate
+just lint         # format + lint with auto-fix, then type-check
 just check        # verify without modifying (CI equivalent)
 just audit        # dependency security audit
+just build        # sdist + wheel + CycloneDX SBOM
+{% if ci_provider != "github" %}
+just bump         # bump version, update CHANGELOG.md and tag (commitizen)
+{% endif %}
 ```
 
-To install Just: `cargo install just` or see [other install methods](https://github.com/casey/just#installation).
-
-{% endif %}
-{% if task_runner == "make" or task_runner == "both" %}
-```bash
-make help         # list all commands
-make install      # install dependencies
-make test         # run tests
-make lint         # check code
-make format       # format code
-```
-
-{% endif %}
-
-Without a task runner, equivalent commands:
+Without Just, equivalent commands:
 
 ```bash
-uv sync --all-groups                                 # install
-uv run pytest --cov                                  # test
-uv run ruff format src/ tests/                       # format
-uv run ruff check --fix src/ tests/                  # lint
-uv run ty check src/                                 # type-check
-uv run pip-audit                                     # audit
+uv sync --all-groups                 # install
+uv run pytest --cov                  # test
+uv run ruff format src/ tests/       # format
+uv run ruff check --fix src/ tests/  # lint
+uv run ty check src/                 # type-check
+uv run pip-audit --skip-editable     # audit
 ```
 
+Logging is configured once by the entry point
+(`{{ project_slug }}.logging_config.configure_logging`); library code only uses
+`logging.getLogger(__name__)`.
+
+## Releasing
+
+{% if ci_provider == "github" %}
+Releases are automated by [release-please](https://github.com/googleapis/release-please)
+from Conventional Commits: merging the release PR bumps `pyproject.toml` and
+`uv.lock`, updates `CHANGELOG.md`, tags `vX.Y.Z` and creates the GitHub release.
+The same workflow (`release.yml`) then builds the distributions, generates a
+CycloneDX SBOM (`sbom.cdx.json`) and a build provenance attestation, and attaches
+them to the release.
+
+> Pull requests opened by release-please with the default `GITHUB_TOKEN` do not
+> trigger CI. Use a GitHub App or fine-grained token (`token:` input) if CI must
+> run on release PRs.
+{% if publish_package %}
+
+### Publishing to PyPI
+
+The release workflow publishes to PyPI with
+[Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC) — no API
+token to manage. One-time setup:
+
+1. On PyPI, add a trusted publisher: owner `{{ repository_namespace }}`, repository
+   `{{ project_slug }}`, workflow `release.yml`, environment `pypi`.
+2. In GitHub, create the `pypi` environment: Settings → Environments.
+{% endif %}
+{% elif ci_provider == "gitlab" %}
+```bash
+just bump                    # commitizen: bump pyproject.toml + uv.lock, CHANGELOG.md, tag vX.Y.Z
+git push --follow-tags
+```
+
+The tag pipeline builds the distributions, generates a CycloneDX SBOM
+(`sbom.cdx.json`){% if publish_package %}, publishes the package to the project
+[Package Registry](https://docs.gitlab.com/user/packages/pypi_repository/)
+with the CI job token{% endif %} and creates the GitLab release.
+{% if publish_package %}
+
+Install from the registry:
+
+```bash
+uv add {{ project_slug }} --index gitlab=https://{{ repository_host }}/api/v4/projects/<project-id>/packages/pypi/simple
+```
+{% endif %}
+{% else %}
+```bash
+just bump    # commitizen: bump pyproject.toml + uv.lock, CHANGELOG.md, tag vX.Y.Z
+just build   # dist/ + sbom.cdx.json
+```
+{% endif %}
 {% if use_docker %}
+
 ## Docker
 
-For reproducible builds, generate and commit `uv.lock` before the first `docker build`:
-
 ```bash
-# 1. Generate the lockfile (once, or after dependency changes)
-uv sync
-git add uv.lock && git commit -m "chore: add lockfile"
+docker build -t {{ project_slug }}:latest --target prod .   # no uv, no sources, non-root
+docker build -t {{ project_slug }}:dev --target dev .       # full toolchain
 
-# 2. Build images
-docker build -t {{ project_slug }}:latest --target prod .
-docker build -t {{ project_slug }}:dev --target dev .
+docker run --rm {{ project_slug }}:latest{% if use_cli %} hello Ada{% endif %}
 
-# 3. Run the production container
-docker run --rm {{ project_slug }}:latest
-
-# 4. Run the development container (interactive shell)
-docker run --rm -it {{ project_slug }}:dev
+docker run --rm -it -v "$PWD/tests:/app/tests:ro" {{ project_slug }}:dev
 ```
-{% endif %}
 
+The build uses `uv sync --locked`: commit `uv.lock` after any dependency change.
+{% endif %}
 {% if use_data %}
+
 ## Data
 
-The `data/` directory is tracked with **Git LFS**. Install Git LFS on your machine:
+Files under `data/` are tracked with **Git LFS** (rasters, NetCDF, HDF5,
+JPEG 2000, Parquet, models…; see `.gitattributes`). The rest of the repository,
+including documentation images, stays in plain Git.
 
 ```bash
 git lfs install   # once per machine
 git clone ...     # LFS files are fetched on clone
 ```
 
-Default tracked formats are common data types (CSV, Parquet, NPY, ML models,
-images, archives). To track additional formats for your domain, edit
-`.gitattributes`:
+To track another format, add a `data/**/*.<ext>` rule to `.gitattributes`.
+{% endif %}
+
+## Updating from the template
+
+This project was generated with [Copier](https://copier.readthedocs.io/). To
+pull the latest template changes (answers are stored in `.copier-answers.yml`):
 
 ```bash
-# Example for scientific formats
-*.h5 filter=lfs diff=lfs merge=lfs -text
-*.tif filter=lfs diff=lfs merge=lfs -text
-```
-
-{% endif %}
-
-{% if use_pypi_publish %}
-## Publishing to PyPI
-
-This project uses [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/)
-(OIDC) — no API token to manage.
-
-**One-time setup**:
-
-1. Configure the project on PyPI: https://pypi.org/manage/account/publishing/
-2. Set:
-   - Repository owner: `{{ github_username }}`
-   - Repository name: `{{ project_slug }}`
-   - Workflow file: `publish.yml`
-   - Environment: `pypi`
-3. Create the `pypi` environment in GitHub: Settings → Environments → New environment
-
-**Publish a release**: create a GitHub Release with tag `vX.Y.Z`. The `publish.yml`
-workflow runs automatically.
-
-{% endif %}
-
-## Project structure
-
-```
-{{ project_slug }}/
-├── src/
-│   └── {{ project_slug }}/
-│       ├── __init__.py
-│       └── __main__.py
-├── tests/
-│   ├── conftest.py
-│   ├── ut/
-│   └── it/
-{% if use_data %}
-├── data/             # Versioned data (Git LFS)
-{% endif %}
-{% if use_notebooks %}
-├── notebooks/        # Exploration notebooks
-{% endif %}
-├── AGENTS.md         # AI / project conventions for assistants
-├── pyproject.toml
-{% if task_runner == "just" or task_runner == "both" %}
-├── justfile
-{% endif %}
-{% if task_runner == "make" or task_runner == "both" %}
-├── Makefile
-{% endif %}
-{% if use_docker %}
-├── Dockerfile
-├── .renovaterc.json    # automated uv updates (Renovate)
-{% endif %}
-{% if use_pre_commit %}
-├── .pre-commit-config.yaml
-{% endif %}
-{% if use_github_actions %}
-├── .github/
-│   ├── workflows/
-│   │   ├── ci.yml
-│   │   ├── release.yml
-│   │   ├── codeql.yml
-│   │   ├── scorecard.yml
-{% if use_pypi_publish %}
-│   │   └── publish.yml
-{% else %}
-│   │   └── ...
-{% endif %}
-│   ├── dependabot.yml
-│   ├── ISSUE_TEMPLATE/
-│   └── pull_request_template.md
-{% endif %}
-├── CHANGELOG.md
-├── LICENSE
-└── README.md
+uvx copier update --trust
 ```
 
 ## License

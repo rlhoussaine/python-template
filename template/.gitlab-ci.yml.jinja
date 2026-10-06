@@ -1,0 +1,162 @@
+# GitLab CI for {{ project_name }}.
+#
+# Pipelines run on merge requests, on the default branch and on `vX.Y.Z` tags.
+# Release flow: `just bump` (commitizen) bumps pyproject.toml + uv.lock, updates
+# CHANGELOG.md and creates the tag; `git push --follow-tags` triggers the
+# build / {% if publish_package %}publish / {% endif %}release jobs below.
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # Avoid duplicate branch + MR pipelines.
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
+
+stages:
+  - quality
+  - test
+  - build
+  - release
+
+variables:
+  # Point UV_IMAGE to an internal mirror if ghcr.io is not reachable.
+  UV_IMAGE: ghcr.io/astral-sh/uv
+  UV_VERSION: "0.11.8"
+  PYTHON_VERSION: "{{ python_version }}"
+  UV_CACHE_DIR: $CI_PROJECT_DIR/.uv-cache
+  UV_LINK_MODE: copy
+  UV_PYTHON_DOWNLOADS: never
+
+.uv:
+  image: $UV_IMAGE:$UV_VERSION-python$PYTHON_VERSION-bookworm-slim
+  variables:
+    # Use the image interpreter (overrides .python-version in the matrix).
+    UV_PYTHON: $PYTHON_VERSION
+  cache:
+    key:
+      files: [uv.lock]
+      prefix: uv-$PYTHON_VERSION
+    paths: [$UV_CACHE_DIR]
+  before_script:
+    # --locked fails if uv.lock is out of date with pyproject.toml.
+    - uv sync --locked --all-groups
+  after_script:
+    - uv cache prune --ci
+
+.release-rules:
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
+
+# ── Code quality ───────────────────────────────────────────────────────────
+quality:
+  extends: .uv
+  stage: quality
+  script:
+    - uv run ruff format --check src/ tests/
+    # Code Quality report for the MR widget, then the actual gate.
+    - uv run ruff check --exit-zero --output-format=gitlab --output-file=gl-code-quality-report.json src/ tests/
+    - uv run ruff check src/ tests/
+    - uv run ty check src/
+    - uv run deptry src/
+  artifacts:
+    when: always
+    reports:
+      codequality: gl-code-quality-report.json
+
+audit:
+  extends: .uv
+  stage: quality
+  script:
+    - uv run pip-audit --skip-editable
+{% if use_docs %}
+
+docs:
+  extends: .uv
+  stage: quality
+  script:
+    - uv run mkdocs build --strict --site-dir public
+  artifacts:
+    paths: [public]
+
+# GitLab Pages (default branch only).
+pages:
+  extends: .uv
+  stage: release
+  needs: [docs]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  before_script: []
+  script:
+    - test -f public/index.html
+  artifacts:
+    paths: [public]
+{% endif %}
+
+# ── Tests ──────────────────────────────────────────────────────────────────
+test:
+  extends: .uv
+  stage: test
+  needs: []
+  parallel:
+    matrix:
+      # Every supported version from requires-python (>={{ python_version }}).
+      - PYTHON_VERSION: {{ python_versions | tojson }}
+  script:
+    - uv run pytest --cov --cov-report=term --cov-report=xml --junitxml=report.xml
+  coverage: '/^TOTAL\s+.*\s(\d+(?:\.\d+)?)%$/'
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+# ── Release (on vX.Y.Z tags) ─────────────────────────────────────────────────
+build:
+  extends: [.uv, .release-rules]
+  stage: build
+  before_script: []
+  script:
+    - uv build
+    # CycloneDX SBOM of the runtime dependencies, attached to the release.
+    - uv export --quiet --locked --no-default-groups --format cyclonedx1.5 --output-file sbom.cdx.json
+  artifacts:
+    paths: [dist/, sbom.cdx.json]
+    reports:
+      cyclonedx: [sbom.cdx.json]
+    expire_in: never
+{% if publish_package %}
+
+publish:
+  extends: [.uv, .release-rules]
+  stage: release
+  needs: [build]
+  before_script: []
+  variables:
+    # Project-level Package Registry, authenticated with the job token.
+    UV_PUBLISH_URL: $CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/pypi
+    UV_PUBLISH_USERNAME: gitlab-ci-token
+    UV_PUBLISH_PASSWORD: $CI_JOB_TOKEN
+  script:
+    - uv publish dist/*
+{% endif %}
+
+release:
+  extends: .release-rules
+  stage: release
+  needs: [build]
+  image: registry.gitlab.com/gitlab-org/cli:latest
+  script:
+    - echo "Creating release $CI_COMMIT_TAG"
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: $CI_COMMIT_TAG
+    description: See CHANGELOG.md
+    assets:
+      links:
+        - name: sbom.cdx.json
+          url: $CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_TAG/raw/sbom.cdx.json?job=build
+          link_type: other

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
@@ -7,7 +7,12 @@ name = "{{ project_slug }}"
 version = "0.1.0"
 description = "{{ project_description }}"
 readme = "README.md"
+{% if license == "Proprietary" %}
+license = "LicenseRef-Proprietary"
+{% else %}
 license = "{{ license }}"
+{% endif %}
+license-files = ["LICENSE"]
 requires-python = ">={{ python_version }}"
 authors = [
     { name = "{{ author }}", email = "{{ email }}" },
@@ -16,66 +21,61 @@ keywords = []
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: {{ python_version }}",
+{% for version in python_versions %}
+    "Programming Language :: Python :: {{ version }}",
+{% endfor %}
     "Operating System :: OS Independent",
     "Typing :: Typed",
-{% if license == "MIT" %}
-    "License :: OSI Approved :: MIT License",
-{% elif license == "Apache-2.0" %}
-    "License :: OSI Approved :: Apache Software License",
-{% elif license == "GPL-3.0" %}
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+{% if license == "Proprietary" %}
+    "Private :: Do Not Upload",
 {% endif %}
 ]
-dependencies = []
-
-[project.urls]
-Homepage = "https://github.com/{{ github_username }}/{{ project_slug }}"
-Repository = "https://github.com/{{ github_username }}/{{ project_slug }}"
-Issues = "https://github.com/{{ github_username }}/{{ project_slug }}/issues"
-Changelog = "https://github.com/{{ github_username }}/{{ project_slug }}/blob/main/CHANGELOG.md"
-
-[dependency-groups]
-dev = [
-    "ruff>=0.15.0",
-    "ty>=0.0.1a6",
-    "deptry>=0.23",
-    "pip-audit>=2.7",
-{% if use_pre_commit %}
-    "pre-commit>=4.0",
-{% endif %}
-{% if use_hypothesis %}
-    "hypothesis>=6.0",
-{% endif %}
-]
-test = [
-    "pytest>=8.0",
-    "pytest-cov>=6.0",
-{% if use_testcontainers %}
-    "testcontainers>=4.0",
-{% endif %}
-]
-{% if use_docs %}
-docs = [
-    "mkdocs>=1.6",
-    "mkdocs-material>=9.5",
-    "mkdocstrings[python]>=0.27",
-]
-{% endif %}
+dependencies = [
 {% if use_cli %}
-cli = ["click>=8.1"]
+    "click>=8.2",
 {% endif %}
+]
 
 {% if use_cli %}
 [project.scripts]
 {{ project_slug }} = "{{ project_slug }}.cli:main"
+
+{% endif %}
+{% if ci_provider != "none" %}
+[project.urls]
+Homepage = "{{ repository_url }}"
+Repository = "{{ repository_url }}"
+Issues = "{{ repository_url }}/{% if ci_provider == 'gitlab' %}-/{% endif %}issues"
+Changelog = "{{ repository_url }}/{% if ci_provider == 'gitlab' %}-/{% endif %}blob/main/CHANGELOG.md"
+
+{% endif %}
+[dependency-groups]
+dev = [
+    "commitizen>=4.19",
+    "deptry>=0.25",
+    "pip-audit>=2.10",
+    "pre-commit>=4.6",
+    "ruff>=0.16",
+    "ty>=0.0.84",
+]
+test = [
+    "hypothesis>=6.140",
+    "pytest>=9.0",
+    "pytest-cov>=7.0",
+]
+{% if use_docs %}
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.7",
+    "mkdocstrings[python]>=1.0",
+]
 {% endif %}
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/{{ project_slug }}"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"src/{{ project_slug }}/py.typed" = "{{ project_slug }}/py.typed"
+# ─── uv ──────────────────────────────────────────────────────────────────────
+[tool.uv]
+# Oldest uv supporting every command used by this project (incl. CycloneDX export).
+required-version = ">=0.9.11"
+default-groups = ["dev", "test"]
 
 # ─── Ruff ────────────────────────────────────────────────────────────────────
 [tool.ruff]
@@ -99,54 +99,78 @@ select = [
     "PT",    # flake8-pytest-style
     "PERF",  # perflint
     "PTH",   # use pathlib
-    "TCH",   # type-checking imports
+    "TC",    # type-checking imports
     "RET",   # return statements
     "C4",    # comprehensions
     "ARG",   # unused arguments
+    "T20",   # no print(): use logging
+    "LOG",   # flake8-logging
+    "G",     # logging format (lazy % interpolation)
 ]
 ignore = [
     "D100",  # missing docstring in public module
     "D104",  # missing docstring in public package
-    "D203",  # one-blank-line-before-class (conflicts with D211)
-    "D213",  # multi-line-summary-second-line (conflicts with D212)
-    "D401",  # imperative mood
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = 80
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "ARG001", "D"]
-"**/__init__.py" = ["F401"]
+"tests/**/*.py" = ["S101", "S603", "ARG001", "D"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["{{ project_slug }}"]
 
 # ─── ty ──────────────────────────────────────────────────────────────────────
-[tool.ty]
+[tool.ty.environment]
 python-version = "{{ python_version }}"
+
+[tool.ty.terminal]
+error-on-warning = true
+
+# ─── deptry ──────────────────────────────────────────────────────────────────
+[tool.deptry]
+known_first_party = ["{{ project_slug }}"]
 
 # ─── Pytest ──────────────────────────────────────────────────────────────────
 [tool.pytest.ini_options]
+minversion = "9.0"
 testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
+xfail_strict = true
+# Any warning is a defect: fail fast instead of letting it rot.
+filterwarnings = ["error"]
 markers = [
     "unit: unit tests",
     "integration: integration tests",
 ]
-addopts = "--strict-markers"
 
 [tool.coverage.run]
-source = ["src/{{ project_slug }}"]
-omit = ["tests/*"]
+source = ["{{ project_slug }}"]
+branch = true
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
 fail_under = 80
-exclude_lines = [
-    "pragma: no cover",
+exclude_also = [
     "raise NotImplementedError",
     "if TYPE_CHECKING:",
     "if __name__ == .__main__.:",
 ]
+
+# ─── Commitizen (Conventional Commits) ───────────────────────────────────────
+[tool.commitizen]
+name = "cz_conventional_commits"
+{% if ci_provider != "github" %}
+# `uv run cz bump` bumps pyproject.toml + uv.lock, updates CHANGELOG.md and
+# creates the `vX.Y.Z` tag{% if ci_provider == "gitlab" %} that triggers the release pipeline{% endif %}.
+version_provider = "uv"
+tag_format = "v$version"
+update_changelog_on_bump = true
+major_version_zero = true
+{% endif %}

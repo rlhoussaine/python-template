@@ -1,6 +1,8 @@
 site_name: "{{ project_name }}"
 site_description: "{{ project_description }}"
-repo_url: "https://github.com/{{ github_username }}/{{ project_slug }}"
+{% if ci_provider != "none" %}
+repo_url: "{{ repository_url }}"
+{% endif %}
 
 theme:
   name: material

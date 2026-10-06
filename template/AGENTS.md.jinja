@@ -15,11 +15,14 @@ follow this project's conventions.
 - Linter: **Ruff** (`uv run ruff check`)
 - Type checker: **ty** (`uv run ty check src/`)
 - Line length: 100 characters
-- All public functions must have type hints
+- All public functions must have type hints and docstrings
+- Never use `print()`: get a logger with `logging.getLogger(__name__)` and use
+  lazy `%` formatting (`logger.info("Read %d tiles", n)`). Only entry points
+  call `configure_logging()` (see `src/{{ project_slug }}/logging_config.py`).
 
 ## Git conventions
 
-This project follows **Conventional Commits**:
+This project follows **Conventional Commits** (enforced by a commit-msg hook):
 - `feat:` new feature
 - `fix:` bug fix
 - `docs:` documentation only
@@ -29,35 +32,29 @@ This project follows **Conventional Commits**:
 
 ## Dependencies
 
-- Package manager: **uv**
-- Add a dependency: `uv add <package>`
-- Add a dev dependency: `uv add --group dev <package>`
-- Do not edit `pyproject.toml` by hand for dependency entries
+- Package manager: **uv** — the toolchain version is constrained by
+  `[tool.uv] required-version` and the Python version by `.python-version`
+- Add a runtime dependency: `uv add <package>`
+- Add a dev dependency: `uv add --group dev <package>` (tests: `--group test`)
+- Do not edit `pyproject.toml` by hand for dependency entries, and always
+  commit `uv.lock`
 
 ## Tests
 
-- Run all tests: `uv run pytest`
-- Unit tests only: `uv run pytest tests/ut/`
-- With coverage: `uv run pytest --cov`
-- Every new feature should have a matching unit test
+- Run all tests with the coverage gate: `just test`
+- Unit tests only: `just test-ut`
+- Every new feature must have a matching unit test
+- Warnings are errors (`filterwarnings = ["error"]`) and `xfail` is strict:
+  fix the cause, do not silence it
 
 ## Task runner
 
-{% if task_runner == "just" or task_runner == "both" %}
-This project uses **Just** as the task runner (cross-platform, self-documented).
+This project uses **Just** (`just --list` shows every recipe):
 
-- List commands: `just`
 - Install: `just install`
 - Test: `just test` (pass args: `just test -k pattern`)
-- Lint + format: `just lint`
+- Auto-fix format/lint: `just lint`
+- Verify like CI, without modifying files: `just check`
 - Security audit: `just audit`
-{% endif %}
-{% if task_runner == "make" or task_runner == "both" %}
-This project uses **Make** as the task runner.
-
-- List commands: `make help`
-- Install: `make install`
-- Test: `make test`
-{% endif %}
 
 DO NOT run Python commands directly (`python -m pytest`, etc.). Always use `uv run` or the task runner recipes.

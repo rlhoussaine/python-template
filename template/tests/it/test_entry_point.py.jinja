@@ -1,0 +1,23 @@
+"""Integration tests: run the installed package as a real process."""
+
+import subprocess
+import sys
+
+import pytest
+
+pytestmark = pytest.mark.integration
+
+
+def test_python_m_runs() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "{{ project_slug }}"{% if use_cli %}, "hello"{% endif %}],
+        capture_output=True,
+        check=True,
+        text=True,
+        timeout=60,
+    )
+{% if use_cli %}
+    assert "Hello World, from {{ project_name }}!" in result.stdout
+{% else %}
+    assert "Hello from {{ project_name }}!" in result.stderr
+{% endif %}
