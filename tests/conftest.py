@@ -11,6 +11,7 @@ from typing import Any
 
 import pytest
 from copier import run_copy
+from plumbum import local
 
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON_VERSIONS = ["3.11", "3.12", "3.13", "3.14"]
@@ -71,8 +72,13 @@ def template_repo(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 @pytest.fixture
-def generate(template_repo: Path, tmp_path: Path) -> Generate:
+def generate(template_repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Generate:
     """Render the template; `tasks=True` also runs `_tasks` (git init, uv lock)."""
+    # Copier runs `_tasks` with plumbum's own copy of the environment
+    # (`local.env`), not `os.environ`: isolate both, like `run()` does.
+    for var in _LEAKY_ENV:
+        monkeypatch.delenv(var, raising=False)
+        monkeypatch.delitem(local.env, var, raising=False)
 
     def _generate(*, tasks: bool = False, name: str = "project", **data: Any) -> Path:
         dst = tmp_path / name
