@@ -5,22 +5,18 @@
 default:
     @just --list
 
-# Install the project and all its dependencies
+# Install the project, all dependency groups and the git hooks
 install:
     uv sync --all-groups
-{% if use_pre_commit %}
     uv run pre-commit install --install-hooks
-{% endif %}
 
-# Update dependencies to their latest compatible versions
+# Upgrade dependencies to their latest compatible versions
 update:
     uv lock --upgrade
     uv sync --all-groups
-{% if use_pre_commit %}
     uv run pre-commit autoupdate
-{% endif %}
 
-# Run tests (native argument passing: `just test -k pattern`)
+# Run tests with coverage (native argument passing: `just test -k pattern`)
 test *args:
     uv run pytest --cov {{ '{{' }}args{{ '}}' }}
 
@@ -32,52 +28,62 @@ test-ut *args:
 test-it *args:
     uv run pytest tests/it/ {{ '{{' }}args{{ '}}' }}
 
-# Format + lint + type-check (auto-fix)
+# Format + lint with auto-fix, then type-check
 lint:
     uv run ruff format src/ tests/
     uv run ruff check --fix src/ tests/
     uv run ty check src/
     uv run deptry src/
 
-# Check without modifying (used in CI)
+# Check without modifying anything (same as CI)
 check:
+    uv lock --check
     uv run ruff format --check src/ tests/
     uv run ruff check src/ tests/
     uv run ty check src/
     uv run deptry src/
 
-# Security audit of dependencies
+# Security audit of the locked dependencies
 audit:
-    uv run pip-audit
+    uv run pip-audit --skip-editable
 
-{% if use_pre_commit %}
 # Run all pre-commit hooks on the entire project
 pre-commit:
     uv run pre-commit run --all-files
-{% endif %}
 
+# Build sdist + wheel and the CycloneDX SBOM of runtime dependencies
+build:
+    uv build
+    uv export --quiet --locked --no-default-groups --format cyclonedx1.5 --output-file sbom.cdx.json
+{% if ci_provider != "github" %}
+
+# Bump the version from Conventional Commits, update CHANGELOG.md and tag
+bump *args:
+    uv run cz bump {{ '{{' }}args{{ '}}' }}
+{% endif %}
 {% if use_docs %}
+
 # Serve documentation locally (live-reload)
 docs-serve:
-    uv run mkdocs serve
+    uv run --group docs mkdocs serve
 
 # Build documentation in strict mode
 docs-build:
-    uv run mkdocs build --strict
+    uv run --group docs mkdocs build --strict
 {% endif %}
-
 {% if use_docker %}
+
 # Build Docker images (dev + prod)
 docker-build:
     docker build -t {{ project_slug }}:dev --target dev .
     docker build -t {{ project_slug }}:latest --target prod .
 
 # Run the production container
-docker-run:
-    docker run --rm -it {{ project_slug }}:latest
+docker-run *args:
+    docker run --rm -it {{ project_slug }}:latest {{ '{{' }}args{{ '}}' }}
 {% endif %}
 
 # Clean generated artifacts
 clean:
-    rm -rf dist/ build/ .coverage htmlcov/ .pytest_cache/ .ruff_cache/ site/
+    rm -rf dist/ build/ .coverage coverage.xml htmlcov/ .pytest_cache/ .ruff_cache/ .hypothesis/ site/ sbom.cdx.json
     find . -type d -name __pycache__ -exec rm -rf {} +

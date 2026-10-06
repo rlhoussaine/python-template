@@ -1,0 +1,43 @@
+"""Unit tests for the command-line interface."""
+
+import pytest
+from click.testing import CliRunner
+
+from {{ project_slug }} import __version__
+from {{ project_slug }}.__main__ import main as module_entry_point
+from {{ project_slug }}.cli import main
+
+pytestmark = pytest.mark.unit
+
+
+@pytest.fixture
+def runner() -> CliRunner:
+    return CliRunner()
+
+
+def test_python_m_uses_the_cli() -> None:
+    assert module_entry_point is main
+
+
+def test_version(runner: CliRunner) -> None:
+    result = runner.invoke(main, ["--version"])
+    assert result.exit_code == 0
+    assert __version__ in result.output
+
+
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    [
+        (["hello"], "Hello World, from {{ project_name }}!"),
+        (["--log-level", "debug", "hello", "Ada"], "Hello Ada, from {{ project_name }}!"),
+    ],
+)
+def test_hello(runner: CliRunner, args: list[str], expected: str) -> None:
+    result = runner.invoke(main, args)
+    assert result.exit_code == 0, result.output
+    assert expected in result.output
+
+
+def test_invalid_log_level_is_rejected(runner: CliRunner) -> None:
+    result = runner.invoke(main, ["--log-level", "verbose", "hello"])
+    assert result.exit_code == 2

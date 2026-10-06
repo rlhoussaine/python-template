@@ -1,0 +1,33 @@
+"""Command-line interface for {{ project_name }}."""
+
+import logging
+
+import click
+
+from {{ project_slug }}.logging_config import configure_logging
+
+logger = logging.getLogger(__name__)
+
+LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
+
+
+@click.group()
+@click.version_option(package_name="{{ project_slug }}")
+@click.option(
+    "--log-level",
+    type=click.Choice(LOG_LEVELS, case_sensitive=False),
+    default="INFO",
+    show_default=True,
+    help="Logging verbosity.",
+)
+def main(log_level: str) -> None:
+    """{{ project_description.rstrip('.') }}."""
+    configure_logging(log_level.upper())
+
+
+@main.command()
+@click.argument("name", default="World")
+def hello(name: str) -> None:
+    """Say hello to NAME."""
+    logger.debug("Greeting %s", name)
+    click.echo(f"Hello {name}, from {{ project_name }}!")

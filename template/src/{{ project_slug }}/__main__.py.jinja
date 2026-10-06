@@ -1,10 +1,25 @@
-"""Entry point for {{ project_name }}."""
+"""Entry point for ``python -m {{ project_slug }}``."""
+{% if use_cli %}
+
+from {{ project_slug }}.cli import main
+
+if __name__ == "__main__":
+    main(prog_name="{{ project_slug }}")
+{% else %}
+
+import logging
+
+from {{ project_slug }}.logging_config import configure_logging
+
+logger = logging.getLogger(__name__)
 
 
 def main() -> None:
     """Run the main application."""
-    print("Hello from {{ project_name }}!")
+    configure_logging()
+    logger.info("Hello from %s!", "{{ project_name }}")
 
 
 if __name__ == "__main__":
     main()
+{% endif %}

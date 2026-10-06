@@ -1,0 +1,52 @@
+"""Unit tests for the package skeleton."""
+
+import logging
+import re
+from importlib.metadata import version
+
+import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+
+import {{ project_slug }}
+{% if not use_cli %}
+from {{ project_slug }}.__main__ import main
+{% endif %}
+from {{ project_slug }}.logging_config import configure_logging
+
+pytestmark = pytest.mark.unit
+
+
+def test_version_matches_distribution_metadata() -> None:
+    assert {{ project_slug }}.__version__ == version("{{ project_slug }}")
+
+
+def test_configure_logging_emits_utc_iso8601(capsys: pytest.CaptureFixture[str]) -> None:
+    configure_logging("DEBUG")
+    logging.getLogger("{{ project_slug }}.test").debug("probe %d", 42)
+
+    err = capsys.readouterr().err
+    assert re.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z \| DEBUG ", err)
+    assert err.rstrip().endswith("{{ project_slug }}.test | probe 42")
+
+
+def test_configure_logging_is_idempotent() -> None:
+    configure_logging()
+    configure_logging(logging.WARNING)
+
+    root = logging.getLogger()
+    assert [h.get_name() for h in root.handlers].count("{{ project_slug }}") == 1
+    assert root.level == logging.WARNING
+
+
+@given(level=st.sampled_from(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]))
+def test_configure_logging_accepts_level_names(level: str) -> None:
+    configure_logging(level)
+    assert logging.getLogger().level == logging.getLevelName(level)
+{% if not use_cli %}
+
+
+def test_main_logs_greeting(capsys: pytest.CaptureFixture[str]) -> None:
+    main()
+    assert "Hello from {{ project_name }}!" in capsys.readouterr().err
+{% endif %}

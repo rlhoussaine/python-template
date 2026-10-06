@@ -1,32 +1,50 @@
 # ─── Git LFS ─────────────────────────────────────────────────────────────────
-# Generic setup for common data formats. Extend as needed for your project
-# (see https://git-lfs.com/).
+# Scoped to data/ on purpose: documentation images, small test fixtures and
+# the rest of the repository stay in plain Git. Extend as needed
+# (see https://git-lfs.com/), keeping the `data/**/` prefix.
 
-# Large tabular data
-*.csv filter=lfs diff=lfs merge=lfs -text
-*.parquet filter=lfs diff=lfs merge=lfs -text
+# Earth observation rasters / scientific arrays
+data/**/*.tif filter=lfs diff=lfs merge=lfs -text
+data/**/*.tiff filter=lfs diff=lfs merge=lfs -text
+data/**/*.jp2 filter=lfs diff=lfs merge=lfs -text
+data/**/*.nc filter=lfs diff=lfs merge=lfs -text
+data/**/*.h5 filter=lfs diff=lfs merge=lfs -text
+data/**/*.hdf5 filter=lfs diff=lfs merge=lfs -text
+data/**/*.he5 filter=lfs diff=lfs merge=lfs -text
+data/**/*.grib filter=lfs diff=lfs merge=lfs -text
+data/**/*.grib2 filter=lfs diff=lfs merge=lfs -text
+data/**/*.img filter=lfs diff=lfs merge=lfs -text
+
+# Vector data
+data/**/*.gpkg filter=lfs diff=lfs merge=lfs -text
+data/**/*.fgb filter=lfs diff=lfs merge=lfs -text
+
+# Tabular data
+data/**/*.csv filter=lfs diff=lfs merge=lfs -text
+data/**/*.parquet filter=lfs diff=lfs merge=lfs -text
 
 # NumPy arrays
-*.npy filter=lfs diff=lfs merge=lfs -text
-*.npz filter=lfs diff=lfs merge=lfs -text
+data/**/*.npy filter=lfs diff=lfs merge=lfs -text
+data/**/*.npz filter=lfs diff=lfs merge=lfs -text
 
 # ML models / weights
-*.pkl filter=lfs diff=lfs merge=lfs -text
-*.joblib filter=lfs diff=lfs merge=lfs -text
-*.pt filter=lfs diff=lfs merge=lfs -text
-*.onnx filter=lfs diff=lfs merge=lfs -text
-*.safetensors filter=lfs diff=lfs merge=lfs -text
+data/**/*.pkl filter=lfs diff=lfs merge=lfs -text
+data/**/*.joblib filter=lfs diff=lfs merge=lfs -text
+data/**/*.pt filter=lfs diff=lfs merge=lfs -text
+data/**/*.onnx filter=lfs diff=lfs merge=lfs -text
+data/**/*.safetensors filter=lfs diff=lfs merge=lfs -text
 
-# High-resolution images / media
-*.png filter=lfs diff=lfs merge=lfs -text
-*.jpg filter=lfs diff=lfs merge=lfs -text
-*.jpeg filter=lfs diff=lfs merge=lfs -text
+# Images
+data/**/*.png filter=lfs diff=lfs merge=lfs -text
+data/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+data/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
 
 # Archives
-*.zip filter=lfs diff=lfs merge=lfs -text
-*.tar.gz filter=lfs diff=lfs merge=lfs -text
-*.tgz filter=lfs diff=lfs merge=lfs -text
+data/**/*.zip filter=lfs diff=lfs merge=lfs -text
+data/**/*.tar filter=lfs diff=lfs merge=lfs -text
+data/**/*.tar.gz filter=lfs diff=lfs merge=lfs -text
+data/**/*.tgz filter=lfs diff=lfs merge=lfs -text
 
-# Databases / binary formats
-*.db filter=lfs diff=lfs merge=lfs -text
-*.sqlite filter=lfs diff=lfs merge=lfs -text
+# Databases
+data/**/*.db filter=lfs diff=lfs merge=lfs -text
+data/**/*.sqlite filter=lfs diff=lfs merge=lfs -text

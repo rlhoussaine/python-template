@@ -1,0 +1,52 @@
+# Only pyproject.toml, uv.lock, README.md, LICENSE and src/ are needed to build.
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI / dev tooling
+.github
+.gitlab
+.gitlab-ci.yml
+.pre-commit-config.yaml
+.copier-answers.yml
+justfile
+
+# Python
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+build/
+dist/
+
+# Test / caches
+tests/
+.pytest_cache
+.ruff_cache
+.hypothesis
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+sbom.cdx.json
+
+# Docs
+docs/
+mkdocs.yml
+site/
+
+# Data and notebooks (not needed at runtime)
+data/
+notebooks/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

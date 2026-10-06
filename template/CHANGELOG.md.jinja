@@ -1,18 +1,13 @@
-{% if use_github_actions %}
 # Changelog
 
-This file is automatically managed by [release-please](https://github.com/googleapis/release-please).
-Do not edit manually.
+All notable changes to **{{ project_name }}** are documented in this file.
+The format follows [Conventional Commits](https://www.conventionalcommits.org/)
+and the project adheres to [Semantic Versioning](https://semver.org/).
+
+{% if ci_provider == "github" %}
+This file is maintained by [release-please](https://github.com/googleapis/release-please):
+do not edit it manually.
 {% else %}
-# Changelog
-
-All notable changes to **{{ project_name }}** will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/),
-and this project adheres to [Semantic Versioning](https://semver.org/).
-
-## [Unreleased]
-
-### Added
-- Initial project structure
+This file is maintained by [commitizen](https://commitizen-tools.github.io/commitizen/)
+(`just bump`): do not edit released sections manually.
 {% endif %}

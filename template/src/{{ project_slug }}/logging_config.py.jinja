@@ -1,0 +1,38 @@
+"""Logging configuration for {{ project_name }}.
+
+Library modules only create loggers with ``logging.getLogger(__name__)``;
+handlers are installed once, by the application entry point, through
+:func:`configure_logging`.
+"""
+
+import logging
+import sys
+import time
+
+LOG_FORMAT = "%(asctime)s.%(msecs)03dZ | %(levelname)-8s | %(name)s | %(message)s"
+DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
+_HANDLER_NAME = "{{ project_slug }}"
+
+
+def configure_logging(level: int | str = logging.INFO) -> None:
+    """Send log records to stderr with ISO 8601 UTC timestamps.
+
+    Idempotent: calling it again replaces the handler it installed previously
+    and leaves any other handler (e.g. pytest's capture) untouched.
+
+    Args:
+        level: Root logger level, as a ``logging`` constant or its name.
+    """
+    formatter = logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT)
+    formatter.converter = time.gmtime
+
+    handler = logging.StreamHandler(sys.stderr)
+    handler.set_name(_HANDLER_NAME)
+    handler.setFormatter(formatter)
+
+    root = logging.getLogger()
+    for existing in [h for h in root.handlers if h.get_name() == _HANDLER_NAME]:
+        root.removeHandler(existing)
+    root.addHandler(handler)
+    root.setLevel(level)
